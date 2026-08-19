@@ -50,7 +50,7 @@ public class PdfExport {
         int i = 1;
         for (DbHelper.Record r : db.getRecords(true, 1)) {
             rT.add(new String[]{String.valueOf(i++), r.number, Util.date(r.date),
-                    Zones.name(r.zone), r.isReturn ? "Да" : "Нет", String.valueOf(r.numPoints),
+                    Zones.shortName(r.zone), r.isReturn ? "Да" : "Нет", String.valueOf(r.numPoints),
                     String.format(java.util.Locale.US, "%.2f", r.amount / 100.0)});
         }
         drawTable(pdf, "Рейсы", hT, wT, rT);

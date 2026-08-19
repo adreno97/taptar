@@ -68,6 +68,10 @@ public class Zones {
         return idx >= 0 && idx < NAMES.length ? NAMES[idx] : "Зона " + (idx + 1);
     }
 
+    public static String shortName(int idx) {
+        return String.valueOf(idx + 1);
+    }
+
     public static final int MAX_EXTRA = 25;
 
     public static long getExtraPrice(Context ctx) {
