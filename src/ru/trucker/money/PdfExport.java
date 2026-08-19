@@ -151,9 +151,13 @@ public class PdfExport {
     public static void share(Context ctx, File f) {
         Uri uri = Uri.parse("content://ru.trucker.money.pdf/" + f.getName());
         Intent i = new Intent(Intent.ACTION_SEND);
-        i.setType("application/pdf");
+        if (f.getName().endsWith(".xlsx")) {
+            i.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        } else {
+            i.setType("application/pdf");
+        }
         i.putExtra(Intent.EXTRA_STREAM, uri);
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        ctx.startActivity(Intent.createChooser(i, "Поделиться PDF"));
+        ctx.startActivity(Intent.createChooser(i, "Поделиться файлом"));
     }
 }

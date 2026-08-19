@@ -14,7 +14,13 @@ public class PdfProvider extends ContentProvider {
     public boolean onCreate() { return true; }
 
     @Override
-    public String getType(Uri uri) { return "application/pdf"; }
+    public String getType(Uri uri) {
+        String name = uri.getLastPathSegment();
+        if (name != null && name.endsWith(".xlsx")) {
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        }
+        return "application/pdf";
+    }
 
     @Override
     public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {

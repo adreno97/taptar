@@ -23,6 +23,10 @@ public class SettingsActivity extends Activity {
     private Spinner countSpinner;
     private List<EditText> priceEds = new ArrayList<>();
     private EditText extraPriceEt, extraStartEt;
+    private android.widget.Switch remindCb;
+    private EditText mileageEt, intervalEt;
+    private Button nextToBtn;
+    private long nextToDate = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +82,31 @@ public class SettingsActivity extends Activity {
         extraPriceEt = makeRow(root, "Оплата за точку выгрузки (руб)");
         extraStartEt = makeRow(root, "Оплата точек выгрузки начиная с №");
 
+        TextView h3 = new TextView(this);
+        h3.setText("Напоминание о ТО");
+        h3.setTextSize(15);
+        h3.setTextColor(0xFF37474F);
+        h3.setPadding(0, Util.dp(this, 18), 0, 0);
+        root.addView(h3);
+
+        remindCb = new android.widget.Switch(this);
+        remindCb.setText("Включить напоминания о ТО");
+        remindCb.setTextSize(15);
+        root.addView(remindCb);
+
+        mileageEt = makeRow(root, "Текущий пробег ТС, км");
+        intervalEt = makeRow(root, "Интервал ТО, км (напр. 15000)");
+        nextToBtn = new Button(this);
+        nextToBtn.setAllCaps(false);
+        nextToBtn.setText("Дата следующего ТО: не задана");
+        nextToBtn.setTextSize(13);
+        nextToBtn.setTextColor(0xFF1565C0);
+        nextToBtn.setBackgroundColor(0xFFFFFFFF);
+        root.addView(nextToBtn, lpWrap());
+        nextToBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { pickNextDate(); }
+        });
+
         Button save = new Button(this);
         save.setText("Сохранить");
         save.setTextSize(16);
@@ -103,6 +132,12 @@ public class SettingsActivity extends Activity {
 
         extraPriceEt.setText(String.valueOf(Zones.getExtraPrice(this) / 100.0).replace(".0", ""));
         extraStartEt.setText(String.valueOf(Zones.getExtraStart(this)));
+
+        remindCb.setChecked(Reminders.isEnabled(this));
+        mileageEt.setText(String.valueOf(Reminders.currentMileage(this)));
+        intervalEt.setText(String.valueOf(Reminders.intervalKm(this)));
+        nextToDate = Reminders.nextDate(this);
+        nextToBtn.setText(nextToDate > 0 ? "Дата следующего ТО: " + Util.date(nextToDate) : "Дата следующего ТО: не задана");
 
         countSpinner.setSelection(Zones.getCount(this) - Zones.MIN);
         countSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -177,6 +212,30 @@ public class SettingsActivity extends Activity {
         return ed;
     }
 
+    private LinearLayout.LayoutParams lpWrap() {
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        p.topMargin = Util.dp(this, 8);
+        return p;
+    }
+
+    private void pickNextDate() {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        if (nextToDate > 0) c.setTimeInMillis(nextToDate);
+        android.app.DatePickerDialog d = new android.app.DatePickerDialog(this,
+                new android.app.DatePickerDialog.OnDateSetListener() {
+                    @Override public void onDateSet(android.widget.DatePicker v, int y, int m, int d) {
+                        java.util.Calendar nc = java.util.Calendar.getInstance();
+                        nc.set(y, m, d, 0, 0, 0);
+                        nc.set(java.util.Calendar.MILLISECOND, 0);
+                        nextToDate = nc.getTimeInMillis();
+                        nextToBtn.setText("Дата следующего ТО: " + Util.date(nextToDate));
+                    }
+                },
+                c.get(java.util.Calendar.YEAR), c.get(java.util.Calendar.MONTH), c.get(java.util.Calendar.DAY_OF_MONTH));
+        d.show();
+    }
+
     private void onSave() {
         int count = countSpinner.getSelectedItemPosition() + Zones.MIN;
         long[] prices = new long[count];
@@ -206,6 +265,23 @@ public class SettingsActivity extends Activity {
         Zones.setPrices(this, prices);
         Zones.setExtraPrice(this, extraPrice);
         Zones.setExtraStart(this, extraStart);
+
+        Reminders.setEnabled(this, remindCb.isChecked());
+        try {
+            Reminders.setCurrentMileage(this, Long.parseLong(mileageEt.getText().toString().trim()));
+        } catch (Exception ignored) {
+            Reminders.setCurrentMileage(this, 0);
+        }
+        try {
+            long iv = Long.parseLong(intervalEt.getText().toString().trim());
+            Reminders.setIntervalKm(this, iv > 0 ? iv : 15000);
+        } catch (Exception ignored) {
+            Reminders.setIntervalKm(this, 15000);
+        }
+        Reminders.setNextDate(this, nextToDate);
+        if (remindCb.isChecked()) Reminders.schedule(this);
+        else Reminders.cancel(this);
+
         Toast.makeText(this, "Настройки сохранены", Toast.LENGTH_SHORT).show();
         finish();
     }

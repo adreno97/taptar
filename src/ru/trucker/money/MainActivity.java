@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
         btnRow3.setOrientation(LinearLayout.HORIZONTAL);
         btnRow3.setPadding(0, Util.dp(this, 8), 0, 0);
         Button settings = btn("⚙ Настройки", 0xFF6D4C41);
-        Button export = btn("Экспорт CSV", 0xFF6D4C41);
+        Button export = btn("Экспорт Excel", 0xFF6D4C41);
         btnRow3.addView(settings);
         btnRow3.addView(export);
         root.addView(btnRow3);
@@ -146,7 +146,7 @@ public class MainActivity extends Activity {
             }
         });
         export.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { exportCsv(); }
+            @Override public void onClick(View v) { exportExcel(); }
         });
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -165,6 +165,15 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         refresh();
+        if (Reminders.isEnabled(this)) {
+            if (android.os.Build.VERSION.SDK_INT >= 33
+                    && android.content.pm.PackageManager.PERMISSION_GRANTED
+                    != checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
+            }
+            Reminders.schedule(this);
+            Reminders.check(this);
+        }
     }
 
     private void refresh() {
@@ -179,13 +188,14 @@ public class MainActivity extends Activity {
         listView.setAdapter(adapter);
     }
 
-    private void exportCsv() {
-        String csv = db.exportCsv();
-        Intent i = new Intent(Intent.ACTION_SEND);
-        i.setType("text/csv");
-        i.putExtra(Intent.EXTRA_SUBJECT, "Учёт ИП — выгрузка");
-        i.putExtra(Intent.EXTRA_TEXT, csv);
-        startActivity(Intent.createChooser(i, "Отправить CSV"));
+    private void exportExcel() {
+        try {
+            java.io.File f = XlsxExport.exportReport(this, db);
+            PdfExport.share(this, f);
+        } catch (Exception e) {
+            android.widget.Toast.makeText(this, "Ошибка Excel: " + e.getMessage(),
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     private LinearLayout card() {

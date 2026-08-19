@@ -18,7 +18,7 @@ public class DbHelper extends SQLiteOpenHelper {
     private static final int DB_VERSION = 4;
 
     public static final String[] CATEGORIES = {
-            "Топливо", "Платные дороги", "Ремонт", "Запчасти", "Шины",
+            "Заправка", "Платные дороги", "Ремонт", "Запчасти", "Шины",
             "ТО", "Страховка", "Налоги", "Штрафы", "Связь",
             "Питание", "Проживание", "Прочее"
     };
@@ -338,28 +338,5 @@ public class DbHelper extends SQLiteOpenHelper {
             c.close();
         }
         return n;
-    }
-
-    public String exportCsv() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Дата;Тип;Номер рейса;Зона;Возврат;Точки выгрузки;Категория;Описание;Сумма (руб)\n");
-        for (Record r : getRecords(true, 0)) {
-            String dateStr = android.text.format.DateFormat.format("dd.MM.yyyy", r.date).toString();
-            if (r.income) {
-                sb.append(dateStr).append(";Доход;")
-                        .append(r.number).append(';')
-                        .append(Zones.name(r.zone)).append(';')
-                        .append(r.isReturn ? "Да" : "Нет").append(';')
-                        .append(r.numPoints).append(";;")
-                        .append(r.note).append(';')
-                        .append(String.format(java.util.Locale.US, "%.2f", r.amount / 100.0)).append('\n');
-            } else {
-                sb.append(dateStr).append(";Расход;;;;")
-                        .append(r.category).append(';')
-                        .append(r.note).append(';')
-                        .append(String.format(java.util.Locale.US, "%.2f", r.amount / 100.0)).append('\n');
-            }
-        }
-        return sb.toString();
     }
 }

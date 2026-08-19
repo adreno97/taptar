@@ -31,6 +31,8 @@ public class AddActivity extends Activity {
     private Spinner catSpinner, zoneSpinner;
     private CheckBox returnCb;
     private TextView payPreview;
+    private LinearLayout fuelBox;
+    private EditText litersEt, pricePerLiterEt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +112,29 @@ public class AddActivity extends Activity {
             catSpinner.setBackgroundColor(0xFFFFFFFF);
             root.addView(catSpinner, spinnerLp());
 
+            fuelBox = new LinearLayout(this);
+            fuelBox.setOrientation(LinearLayout.HORIZONTAL);
+            fuelBox.setPadding(0, Util.dp(this, 8), 0, 0);
+            litersEt = fuelField(fuelBox, "Литров");
+            pricePerLiterEt = fuelField(fuelBox, "Цена за литр, руб");
+            fuelBox.setVisibility(View.GONE);
+            root.addView(fuelBox);
+
             amountEt = addField(root, "Сумма расхода (руб)", false);
+
+            catSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+                @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                    toggleFuel();
+                }
+                @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
+            });
+            android.text.TextWatcher tw = new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+                @Override public void onTextChanged(CharSequence s, int a, int b, int c) { recomputeFuel(); }
+                @Override public void afterTextChanged(android.text.Editable s) {}
+            };
+            litersEt.addTextChangedListener(tw);
+            pricePerLiterEt.addTextChangedListener(tw);
         }
 
         noteEt = addField(root, "Заметка (необязательно)", true);
@@ -216,6 +240,46 @@ public class AddActivity extends Activity {
         return 0;
     }
 
+    private EditText fuelField(LinearLayout box, String hint) {
+        EditText et = new EditText(this);
+        et.setHint(hint);
+        et.setTextSize(14);
+        et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        et.setBackgroundColor(0xFFFFFFFF);
+        et.setPadding(Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10));
+        box.addView(et, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        return et;
+    }
+
+    private boolean isFuel() {
+        return !income && catSpinner != null
+                && catSpinner.getSelectedItemPosition() == 0;
+    }
+
+    private void toggleFuel() {
+        boolean fuel = isFuel();
+        if (fuelBox != null) {
+            fuelBox.setVisibility(fuel ? View.VISIBLE : View.GONE);
+        }
+        if (amountEt != null) amountEt.setEnabled(!fuel);
+        if (fuel) recomputeFuel();
+    }
+
+    private void recomputeFuel() {
+        if (fuelBox == null || !isFuel()) return;
+        double liters = 0, price = 0;
+        try {
+            liters = Double.parseDouble(litersEt.getText().toString().replace(',', '.'));
+        } catch (Exception ignored) {}
+        try {
+            price = Double.parseDouble(pricePerLiterEt.getText().toString().replace(',', '.'));
+        } catch (Exception ignored) {}
+        if (liters > 0 && price > 0) {
+            long kop = Math.round(liters * price * 100.0);
+            amountEt.setText(String.format(java.util.Locale.US, "%.2f", kop / 100.0));
+        }
+    }
+
     private EditText addField(LinearLayout root, String hint, boolean multi) {
         EditText et = new EditText(this);
         et.setHint(hint);
@@ -292,7 +356,23 @@ public class AddActivity extends Activity {
             if (editId >= 0) db.updateTrip(editId, number, date, zone, ret, base, points, total, note);
             else db.addTrip(number, date, zone, ret, base, points, total, note);
         } else {
-            long amount = Util.parseKopecks(amountEt.getText().toString());
+            long amount;
+            if (isFuel()) {
+                double liters = 0, price = 0;
+                try {
+                    liters = Double.parseDouble(litersEt.getText().toString().replace(',', '.'));
+                } catch (Exception ignored) {}
+                try {
+                    price = Double.parseDouble(pricePerLiterEt.getText().toString().replace(',', '.'));
+                } catch (Exception ignored) {}
+                if (liters <= 0 || price <= 0) {
+                    Toast.makeText(this, "Укажите литры и цену за литр", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                amount = Math.round(liters * price * 100.0);
+            } else {
+                amount = Util.parseKopecks(amountEt.getText().toString());
+            }
             if (amount <= 0) {
                 Toast.makeText(this, "Укажите сумму больше нуля", Toast.LENGTH_SHORT).show();
                 return;
