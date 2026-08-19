@@ -229,6 +229,35 @@ public class StatsActivity extends Activity {
         tripTv.setTextColor(0xFF546E7A);
         body.addView(tripTv);
 
+        double[] fuel = db.getFuelStats(start, end);
+        if (fuel[3] > 0) {
+            TextView hF = new TextView(this);
+            hF.setText("Топливо");
+            hF.setTextSize(16);
+            hF.setTextColor(0xFF37474F);
+            hF.setTypeface(hF.getTypeface(), android.graphics.Typeface.BOLD);
+            LinearLayout.LayoutParams hFp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            hFp.topMargin = Util.dp(this, 14);
+            body.addView(hF, hFp);
+
+            StringBuilder fuelTxt = new StringBuilder();
+            fuelTxt.append("Заправок: ").append((int) fuel[3]).append("\n");
+            fuelTxt.append("Литров: ").append(String.format(java.util.Locale.US, "%.1f", fuel[0])).append("\n");
+            fuelTxt.append("Потрачено: ").append(Util.rub((long) fuel[1])).append("\n");
+            if (fuel[2] > 0) {
+                fuelTxt.append("Расход: ").append(String.format(java.util.Locale.US, "%.1f", fuel[0] / fuel[2] * 100))
+                        .append(" л/100 км\n");
+                fuelTxt.append("Стоимость: ").append(String.format(java.util.Locale.US, "%.2f", (fuel[1] / 100.0) / fuel[2]))
+                        .append(" ₽/км\n");
+            }
+            TextView fuelTv = new TextView(this);
+            fuelTv.setText(fuelTxt.toString());
+            fuelTv.setTextSize(14);
+            fuelTv.setTextColor(0xFF546E7A);
+            body.addView(fuelTv);
+        }
+
         TextView h2 = new TextView(this);
         h2.setText("Расходы по категориям");
         h2.setTextSize(16);
