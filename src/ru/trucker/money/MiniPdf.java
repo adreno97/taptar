@@ -152,12 +152,13 @@ public class MiniPdf {
                 size, r, g, b, x, y, hex.toString());
     }
 
-    /** y measured from top of the page. */
+    /** y measured from top of the page; places the glyph TOP at y. */
     public void text(String s, float x, float yFromTop, float size) {
         markAll(s);
         String s2 = s.isEmpty() ? " " : s;
         int page = pages.size() - 1;
-        float pdfY = PAGE_H - yFromTop;
+        float ascentPt = ascent / (float) unitsPerEm * size;
+        float pdfY = PAGE_H - yFromTop - ascentPt;
         append(page, textOps(s2, x, pdfY, size));
     }
 
