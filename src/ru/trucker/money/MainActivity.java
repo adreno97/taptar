@@ -75,6 +75,15 @@ public class MainActivity extends Activity {
         btnRow3.addView(export);
         root.addView(btnRow3);
 
+        LinearLayout btnRow4 = new LinearLayout(this);
+        btnRow4.setOrientation(LinearLayout.HORIZONTAL);
+        btnRow4.setPadding(0, Util.dp(this, 8), 0, 0);
+        Button maint = btn("🚗 Обслуживание ТС", 0xFF37474F);
+        Button report = btn("Отчёт PDF", 0xFF37474F);
+        btnRow4.addView(maint);
+        btnRow4.addView(report);
+        root.addView(btnRow4);
+
         TextView recentTv = new TextView(this);
         recentTv.setText("Последние записи");
         recentTv.setTextSize(16);
@@ -121,6 +130,20 @@ public class MainActivity extends Activity {
         });
         settings.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, SettingsActivity.class)); }
+        });
+        maint.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, MaintenanceActivity.class)); }
+        });
+        report.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                try {
+                    java.io.File f = PdfExport.exportReport(MainActivity.this, db);
+                    PdfExport.share(MainActivity.this, f);
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(MainActivity.this, "Ошибка PDF: " + e.getMessage(),
+                            android.widget.Toast.LENGTH_LONG).show();
+                }
+            }
         });
         export.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { exportCsv(); }

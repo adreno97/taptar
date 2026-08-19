@@ -23,7 +23,7 @@ cp build/dex/classes.dex build/stage/classes.dex
 echo "ok"
 
 echo "== aapt package =="
-"$BT/aapt" package -f -M AndroidManifest.xml -S res -I "$PLAT" -F build/app.unsigned.apk build/stage
+"$BT/aapt" package -f -M AndroidManifest.xml -S res -A assets -I "$PLAT" -F build/app.unsigned.apk build/stage
 echo "ok"
 
 echo "== zipalign =="

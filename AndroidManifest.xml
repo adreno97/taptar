@@ -25,5 +25,13 @@
         <activity android:name=".HistoryActivity" android:label="История" android:exported="false" />
         <activity android:name=".StatsActivity" android:label="Статистика" android:exported="false" />
         <activity android:name=".SettingsActivity" android:label="Настройки" android:exported="false" />
+        <activity android:name=".MaintenanceActivity" android:label="Обслуживание ТС" android:exported="false" />
+        <activity android:name=".AddMaintenanceActivity" android:label="Обслуживание ТС" android:exported="false" />
+
+        <provider
+            android:name=".PdfProvider"
+            android:authorities="ru.trucker.money.pdf"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>

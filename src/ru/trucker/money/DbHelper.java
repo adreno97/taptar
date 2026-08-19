@@ -15,7 +15,7 @@ import java.util.Map;
 public class DbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "trucker.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
 
     public static final String[] CATEGORIES = {
             "Топливо", "Платные дороги", "Ремонт", "Запчасти", "Шины",
@@ -37,6 +37,13 @@ public class DbHelper extends SQLiteOpenHelper {
         public String sub;
         public String category;
         public String note;
+    }
+
+    public static class Maint {
+        public long id;
+        public long date;
+        public long mileage;
+        public String works;
     }
 
     public DbHelper(Context ctx) {
@@ -61,13 +68,26 @@ public class DbHelper extends SQLiteOpenHelper {
                 "category TEXT NOT NULL," +
                 "amount INTEGER NOT NULL," +
                 "note TEXT)");
+        db.execSQL("CREATE TABLE maintenance (" +
+                "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "date INTEGER NOT NULL," +
+                "mileage INTEGER NOT NULL," +
+                "works TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
-        db.execSQL("DROP TABLE IF EXISTS trips");
-        db.execSQL("DROP TABLE IF EXISTS expenses");
-        onCreate(db);
+        if (oldV < 3) {
+            db.execSQL("DROP TABLE IF EXISTS trips");
+            db.execSQL("DROP TABLE IF EXISTS expenses");
+            onCreate(db);
+        } else {
+            db.execSQL("CREATE TABLE IF NOT EXISTS maintenance (" +
+                    "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "date INTEGER NOT NULL," +
+                    "mileage INTEGER NOT NULL," +
+                    "works TEXT)");
+        }
     }
 
     public void addTrip(String number, long date, int zone, boolean isReturn, long basePrice, int numPoints, long revenue, String note) {
@@ -116,6 +136,58 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public void deleteRecord(long id, boolean income) {
         getWritableDatabase().delete(income ? "trips" : "expenses", "_id=?", new String[]{String.valueOf(id)});
+    }
+
+    public void addMaint(long date, long mileage, String works) {
+        ContentValues cv = new ContentValues();
+        cv.put("date", date);
+        cv.put("mileage", mileage);
+        cv.put("works", works == null ? "" : works);
+        getWritableDatabase().insert("maintenance", null, cv);
+    }
+
+    public void updateMaint(long id, long date, long mileage, String works) {
+        ContentValues cv = new ContentValues();
+        cv.put("date", date);
+        cv.put("mileage", mileage);
+        cv.put("works", works == null ? "" : works);
+        getWritableDatabase().update("maintenance", cv, "_id=?", new String[]{String.valueOf(id)});
+    }
+
+    public void deleteMaint(long id) {
+        getWritableDatabase().delete("maintenance", "_id=?", new String[]{String.valueOf(id)});
+    }
+
+    public Maint getMaintById(long id) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT _id, date, mileage, works FROM maintenance WHERE _id=?", new String[]{String.valueOf(id)});
+        try {
+            if (c.moveToFirst()) return readMaint(c);
+        } finally {
+            c.close();
+        }
+        return null;
+    }
+
+    public List<Maint> getMaintAll() {
+        List<Maint> out = new ArrayList<>();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT _id, date, mileage, works FROM maintenance ORDER BY date DESC, _id DESC", null);
+        try {
+            while (c.moveToNext()) out.add(readMaint(c));
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
+    private Maint readMaint(Cursor c) {
+        Maint m = new Maint();
+        m.id = c.getLong(0);
+        m.date = c.getLong(1);
+        m.mileage = c.getLong(2);
+        m.works = c.getString(3);
+        return m;
     }
 
     public Record getRecord(long id, boolean income) {
