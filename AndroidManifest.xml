@@ -31,6 +31,7 @@
         <activity android:name=".MaintenanceActivity" android:label="Обслуживание ТС" android:exported="false" />
         <activity android:name=".AddMaintenanceActivity" android:label="Обслуживание ТС" android:exported="false" />
         <activity android:name=".ImportActivity" android:label="Импорт из Excel" android:exported="false" />
+        <activity android:name=".MoreActivity" android:label="Ещё" android:exported="false" />
 
         <provider
             android:name=".PdfProvider"

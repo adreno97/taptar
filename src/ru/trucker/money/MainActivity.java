@@ -69,22 +69,11 @@ public class MainActivity extends Activity {
         LinearLayout btnRow3 = new LinearLayout(this);
         btnRow3.setOrientation(LinearLayout.HORIZONTAL);
         btnRow3.setPadding(0, Util.dp(this, 8), 0, 0);
-        Button settings = btn("⚙ Настройки", 0xFF6D4C41);
-        Button export = btn("Экспорт Excel", 0xFF6D4C41);
-        Button importX = btn("Импорт Excel", 0xFF00897B);
-        btnRow3.addView(settings);
-        btnRow3.addView(export);
-        btnRow3.addView(importX);
-        root.addView(btnRow3);
-
-        LinearLayout btnRow4 = new LinearLayout(this);
-        btnRow4.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow4.setPadding(0, Util.dp(this, 8), 0, 0);
         Button maint = btn("🚗 Обслуживание ТС", 0xFF37474F);
-        Button report = btn("Отчёт PDF", 0xFF37474F);
-        btnRow4.addView(maint);
-        btnRow4.addView(report);
-        root.addView(btnRow4);
+        Button more = btn("⚙ Ещё", 0xFF6D4C41);
+        btnRow3.addView(maint);
+        btnRow3.addView(more);
+        root.addView(btnRow3);
 
         TextView recentTv = new TextView(this);
         recentTv.setText("Последние записи");
@@ -130,28 +119,11 @@ public class MainActivity extends Activity {
         stats.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, StatsActivity.class)); }
         });
-        settings.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, SettingsActivity.class)); }
-        });
         maint.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, MaintenanceActivity.class)); }
         });
-        report.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
-                try {
-                    java.io.File f = PdfExport.exportReport(MainActivity.this, db);
-                    PdfExport.share(MainActivity.this, f);
-                } catch (Exception e) {
-                    android.widget.Toast.makeText(MainActivity.this, "Ошибка PDF: " + e.getMessage(),
-                            android.widget.Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-        export.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { exportExcel(); }
-        });
-        importX.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, ImportActivity.class)); }
+        more.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, MoreActivity.class)); }
         });
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -191,16 +163,6 @@ public class MainActivity extends Activity {
         data = db.getRecent(30);
         adapter = new RecordsAdapter(this, data);
         listView.setAdapter(adapter);
-    }
-
-    private void exportExcel() {
-        try {
-            java.io.File f = XlsxExport.exportReport(this, db);
-            PdfExport.share(this, f);
-        } catch (Exception e) {
-            android.widget.Toast.makeText(this, "Ошибка Excel: " + e.getMessage(),
-                    android.widget.Toast.LENGTH_LONG).show();
-        }
     }
 
     private LinearLayout card() {
