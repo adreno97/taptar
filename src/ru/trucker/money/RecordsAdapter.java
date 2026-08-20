@@ -13,10 +13,19 @@ import java.util.List;
 
 public class RecordsAdapter extends BaseAdapter {
 
-    private final Context ctx;
-    private final List<DbHelper.Record> items;
+    public static class Header {
+        public String title;
+        public String totals;
+        public Header(String title, String totals) {
+            this.title = title;
+            this.totals = totals;
+        }
+    }
 
-    public RecordsAdapter(Context ctx, List<DbHelper.Record> items) {
+    private final Context ctx;
+    private final List<Object> items;
+
+    public RecordsAdapter(Context ctx, List<Object> items) {
         this.ctx = ctx;
         this.items = items;
     }
@@ -29,17 +38,22 @@ public class RecordsAdapter extends BaseAdapter {
 
     @Override
     public View getView(int pos, View convert, ViewGroup parent) {
+        Object item = items.get(pos);
+        if (item instanceof Header) {
+            return headerView((Header) item);
+        }
         LinearLayout row;
-        if (convert == null) {
+        if (convert == null || !(convert.getTag() instanceof Boolean)) {
             row = new LinearLayout(ctx);
             row.setOrientation(LinearLayout.VERTICAL);
             row.setPadding(Util.dp(ctx, 14), Util.dp(ctx, 10), Util.dp(ctx, 14), Util.dp(ctx, 10));
+            row.setTag(Boolean.TRUE);
         } else {
             row = (LinearLayout) convert;
             row.removeAllViews();
         }
 
-        DbHelper.Record r = items.get(pos);
+        DbHelper.Record r = (DbHelper.Record) item;
         int accent = r.income ? 0xFF2E7D32 : 0xFFC62828;
 
         LinearLayout top = new LinearLayout(ctx);
@@ -79,5 +93,33 @@ public class RecordsAdapter extends BaseAdapter {
                 LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
 
         return row;
+    }
+
+    private View headerView(Header h) {
+        LinearLayout head = new LinearLayout(ctx);
+        head.setOrientation(LinearLayout.VERTICAL);
+        head.setPadding(Util.dp(ctx, 14), Util.dp(ctx, 8), Util.dp(ctx, 14), Util.dp(ctx, 6));
+        head.setBackgroundColor(0xFFE3F2FD);
+
+        TextView title = new TextView(ctx);
+        title.setText(h.title);
+        title.setTextSize(14);
+        title.setTextColor(0xFF1565C0);
+        title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
+        head.addView(title);
+
+        if (h.totals != null && !h.totals.isEmpty()) {
+            TextView totals = new TextView(ctx);
+            totals.setText(h.totals);
+            totals.setTextSize(12);
+            totals.setTextColor(0xFF546E7A);
+            head.addView(totals);
+        }
+
+        View div = new View(ctx);
+        div.setBackgroundColor(0xFFBBDEFB);
+        head.addView(div, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
+        return head;
     }
 }

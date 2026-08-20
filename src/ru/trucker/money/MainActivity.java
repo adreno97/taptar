@@ -128,7 +128,9 @@ public class MainActivity extends Activity {
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
-                DbHelper.Record r = data.get(pos);
+                Object item = adapter.getItem(pos);
+                if (!(item instanceof DbHelper.Record)) return;
+                DbHelper.Record r = (DbHelper.Record) item;
                 Intent i = new Intent(MainActivity.this, AddActivity.class);
                 i.putExtra("mode", r.income ? "income" : "expense");
                 i.putExtra("edit_id", r.id);
@@ -160,9 +162,60 @@ public class MainActivity extends Activity {
         profitTv.setText(Util.rub(t[0] - t[1]));
         profitTv.setTextColor(t[0] - t[1] >= 0 ? 0xFF2E7D32 : 0xFFC62828);
 
-        data = db.getRecent(30);
-        adapter = new RecordsAdapter(this, data);
+        data = db.getRecent(40);
+        adapter = new RecordsAdapter(this, groupByPeriod(data));
         listView.setAdapter(adapter);
+    }
+
+    private List<Object> groupByPeriod(List<DbHelper.Record> records) {
+        List<Object> out = new ArrayList<>();
+        long curStart = -1;
+        for (DbHelper.Record r : records) {
+            long[] range = periodRange(r.date);
+            if (range[0] != curStart) {
+                curStart = range[0];
+                long[] totals = db.getTotals(range[0], range[1]);
+                String totalsTxt = "Доход: " + Util.rub(totals[0]) + "  ·  Расход: " + Util.rub(totals[1]);
+                out.add(new RecordsAdapter.Header(periodLabel(r.date), totalsTxt));
+            }
+            out.add(r);
+        }
+        return out;
+    }
+
+    private long[] periodRange(long date) {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.setTimeInMillis(date);
+        int day = c.get(java.util.Calendar.DAY_OF_MONTH);
+        boolean firstHalf = day <= 15;
+        c.set(java.util.Calendar.DAY_OF_MONTH, firstHalf ? 1 : 16);
+        c.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        c.set(java.util.Calendar.MINUTE, 0);
+        c.set(java.util.Calendar.SECOND, 0);
+        c.set(java.util.Calendar.MILLISECOND, 0);
+        long start = c.getTimeInMillis();
+        java.util.Calendar endC = (java.util.Calendar) c.clone();
+        if (firstHalf) {
+            endC.set(java.util.Calendar.DAY_OF_MONTH, 16);
+        } else {
+            endC.add(java.util.Calendar.MONTH, 1);
+            endC.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        }
+        return new long[]{start, endC.getTimeInMillis()};
+    }
+
+    private String periodLabel(long date) {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.setTimeInMillis(date);
+        int day = c.get(java.util.Calendar.DAY_OF_MONTH);
+        String mn = android.text.format.DateFormat.format("MMM", c).toString();
+        int lastDay = c.getActualMaximum(java.util.Calendar.DAY_OF_MONTH);
+        String label = day <= 15 ? "1–15 " + mn : "16–" + lastDay + " " + mn;
+        int year = c.get(java.util.Calendar.YEAR);
+        if (year != java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)) {
+            label += " " + year;
+        }
+        return label;
     }
 
     private LinearLayout card() {

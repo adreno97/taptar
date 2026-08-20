@@ -86,7 +86,7 @@ public class HistoryActivity extends Activity {
 
     private void reload() {
         data = db.getRecords(allTime, typeFilter);
-        adapter = new RecordsAdapter(this, data);
+        adapter = new RecordsAdapter(this, new java.util.ArrayList<Object>(data));
         listView.setAdapter(adapter);
     }
 }
