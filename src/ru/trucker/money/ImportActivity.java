@@ -58,7 +58,6 @@ public class ImportActivity extends Activity {
                 Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("*/*");
-                i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/octet-stream"});
                 startActivityForResult(i, REQ_PICK);
             }
         });
@@ -98,7 +97,11 @@ public class ImportActivity extends Activity {
             String name = fileName(uri);
             try {
                 InputStream is = getContentResolver().openInputStream(uri);
-                parsed = XlsxImport.parse(is);
+                if (name != null && name.toLowerCase(java.util.Locale.US).endsWith(".xls")) {
+                    parsed = XlsImport.parse(is);
+                } else {
+                    parsed = XlsxImport.parse(is);
+                }
                 is.close();
                 long total = 0;
                 long fuelTotal = 0;

@@ -137,7 +137,7 @@ public class XlsxImport {
         return db.parse(new ByteArrayInputStream(bytes));
     }
 
-    private static List<Row> mapRows(String[][] table) {
+    public static List<Row> mapRows(String[][] table) {
         List<Row> out = new ArrayList<>();
         int headerRow = -1;
         int nCol = -1, dCol = -1, rCol = -1, bCol = -1, xCol = -1, retCol = -1, fCol = -1;
