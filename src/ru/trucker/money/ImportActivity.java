@@ -101,10 +101,12 @@ public class ImportActivity extends Activity {
                 parsed = XlsxImport.parse(is);
                 is.close();
                 long total = 0;
+                long fuelTotal = 0;
                 int dups = 0;
                 for (XlsxImport.Row r : parsed) {
                     if (db.hasTripNumber(r.number)) dups++;
-                    else total += r.revenueKop;
+                    else total += revOf(r);
+                    fuelTotal += r.fuelKop;
                 }
                 StringBuilder sb = new StringBuilder();
                 sb.append("Файл: ").append(name).append("\n");
@@ -112,13 +114,18 @@ public class ImportActivity extends Activity {
                 if (dups > 0) sb.append("Уже есть в базе (пропустятся): ").append(dups).append("\n");
                 sb.append("К импорту: ").append(parsed.size() - dups).append("\n");
                 if (parsed.size() - dups > 0) {
-                    sb.append("Итоговая сумма: ").append(Util.rub(total)).append("\n\n");
+                    sb.append("Итоговая сумма рейсов: ").append(Util.rub(total)).append("\n");
+                    if (fuelTotal > 0) {
+                        sb.append("Топливо (из реестра): ").append(Util.rub(fuelTotal))
+                                .append(" — добавится расходом\n");
+                    }
+                    sb.append("\n");
                     int show = Math.min(parsed.size(), 5);
                     for (int i = 0; i < show; i++) {
                         XlsxImport.Row r = parsed.get(i);
                         sb.append("• ").append(r.number).append(" · ").append(Util.date(r.date))
                                 .append(" · зона ").append(r.zone + 1).append(" · ")
-                                .append(Util.rub(r.revenueKop)).append("\n");
+                                .append(Util.rub(revOf(r))).append("\n");
                     }
                     if (parsed.size() > show) sb.append("… ещё ").append(parsed.size() - show).append(" рейсов\n");
                 }
@@ -146,19 +153,39 @@ public class ImportActivity extends Activity {
         return name == null ? "файл" : name;
     }
 
+    private long revOf(XlsxImport.Row r) {
+        long rev = r.baseKop + (r.isReturn ? r.baseKop / 2 : 0);
+        if (r.extraCount > 0) {
+            long ep = r.extraPriceKop > 0 ? r.extraPriceKop : Zones.getExtraPrice(this);
+            rev += r.extraCount * ep;
+        }
+        return rev;
+    }
+
     private void doImport() {
         if (parsed == null) return;
         int added = 0, skipped = 0;
+        long fuelTotal = 0;
+        long lastDate = 0;
         for (XlsxImport.Row r : parsed) {
             if (db.hasTripNumber(r.number)) {
                 skipped++;
                 continue;
             }
-            db.addTrip(r.number, r.date, r.zone, r.isReturn, r.baseKop, r.numPoints, r.revenueKop, "");
+            long rev = revOf(r);
+            db.addTrip(r.number, r.date, r.zone, r.isReturn, r.baseKop, r.numPoints, rev, "");
+            fuelTotal += r.fuelKop;
+            if (r.date > lastDate) lastDate = r.date;
             added++;
         }
-        Toast.makeText(this, "Импортировано: " + added + ", пропущено дублей: " + skipped,
-                Toast.LENGTH_LONG).show();
+        StringBuilder msg = new StringBuilder("Импортировано: " + added);
+        if (skipped > 0) msg.append(", дублей пропущено: ").append(skipped);
+        if (fuelTotal > 0) {
+            db.addExpense(lastDate > 0 ? lastDate : System.currentTimeMillis(),
+                    "Заправка", fuelTotal, "Топливо (из реестра)");
+            msg.append(".\nТопливо добавлено расходом: ").append(Util.rub(fuelTotal));
+        }
+        Toast.makeText(this, msg.toString(), Toast.LENGTH_LONG).show();
         finish();
     }
 }

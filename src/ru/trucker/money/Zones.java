@@ -83,7 +83,7 @@ public class Zones {
     }
 
     public static int getExtraStart(Context ctx) {
-        int s = ctx.getSharedPreferences("zones", 0).getInt("extra_start", 3);
+        int s = ctx.getSharedPreferences("zones", 0).getInt("extra_start", 4);
         if (s < 1) s = 1;
         return s;
     }

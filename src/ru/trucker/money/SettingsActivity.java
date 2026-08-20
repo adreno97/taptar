@@ -74,7 +74,7 @@ public class SettingsActivity extends Activity {
         root.addView(h2);
 
         TextView hint2 = new TextView(this);
-        hint2.setText("Точки выгрузки до указанного номера входят в стоимость зоны, с этого номера каждая точка оплачивается отдельно.");
+        hint2.setText("Точки выгрузки до 3-й включительно входят в стоимость зоны, с 4-й каждая точка оплачивается отдельно.");
         hint2.setTextSize(12);
         hint2.setTextColor(0xFF90A4AE);
         root.addView(hint2);

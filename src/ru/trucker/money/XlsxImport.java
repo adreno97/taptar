@@ -26,9 +26,12 @@ public class XlsxImport {
         public long date;
         public int zone;
         public boolean isReturn;
-        public int numPoints;
+        public int numPoints;     // total unload points = 3 + extra
+        public int extraCount;
+        public long extraPriceKop; // price from "N*price" if present, else 0
         public long baseKop;
         public long revenueKop;
+        public long fuelKop;      // |штраф| = топливо за реестр
     }
 
     public static List<Row> parse(InputStream in) throws Exception {
@@ -137,7 +140,7 @@ public class XlsxImport {
     private static List<Row> mapRows(String[][] table) {
         List<Row> out = new ArrayList<>();
         int headerRow = -1;
-        int nCol = -1, dCol = -1, rCol = -1, bCol = -1, xCol = -1, retCol = -1, sCol = -1;
+        int nCol = -1, dCol = -1, rCol = -1, bCol = -1, xCol = -1, retCol = -1, fCol = -1;
         for (int i = 0; i < table.length; i++) {
             for (int c = 0; c < table[i].length; c++) {
                 String h = table[i][c].trim();
@@ -147,7 +150,7 @@ public class XlsxImport {
                 if ("Рейс".equals(h)) bCol = c;
                 if ("Доп.магазин".equals(h) || "Доп.точки".equals(h) || "Точки выгрузки".equals(h)) xCol = c;
                 if ("Возврат".equals(h)) retCol = c;
-                if ("Сумма всего с НДС".equals(h) || "Сумма".equals(h)) sCol = c;
+                if ("Штраф".equals(h)) fCol = c;
             }
             if (headerRow >= 0) break;
         }
@@ -174,15 +177,21 @@ public class XlsxImport {
             r.isReturn = ret > 0;
 
             String extra = xCol >= 0 ? cell(row, xCol) : "";
-            r.numPoints = pointsFromExtra(extra);
+            int[] ep = pointsFromExtra(extra);
+            r.extraCount = ep[0];
+            r.extraPriceKop = ep[1] * 100L;
+            r.numPoints = 3 + r.extraCount;
 
-            double sum = sCol >= 0 ? toDouble(cell(row, sCol)) : 0;
-            if (sum != 0) {
-                r.revenueKop = Math.round(sum * 100.0);
-            } else {
-                long rev = r.baseKop + (r.isReturn ? r.baseKop / 2 : 0);
-                r.revenueKop = rev;
+            double fuel = fCol >= 0 ? toDouble(cell(row, fCol)) : 0;
+            r.fuelKop = Math.round(Math.abs(fuel) * 100.0);
+
+            // revenue = base + return(+50%) + extra points; final sum in the file is not used
+            // because it may already include the fuel deduction
+            long rev = r.baseKop + (r.isReturn ? r.baseKop / 2 : 0);
+            if (r.extraCount > 0 && r.extraPriceKop > 0) {
+                rev += r.extraCount * r.extraPriceKop;
             }
+            r.revenueKop = rev;
             out.add(r);
         }
         return out;
@@ -241,14 +250,20 @@ public class XlsxImport {
         }
     }
 
-    private static int pointsFromExtra(String extra) {
+    /** Returns {count, priceRubles} from extra cell like "1*600". */
+    private static int[] pointsFromExtra(String extra) {
+        int count = 0, price = 0;
         try {
-            Matcher m = Pattern.compile("(\\d+)\\s*\\*").matcher(extra);
-            if (m.find()) return Integer.parseInt(m.group(1));
+            Matcher m = Pattern.compile("(\\d+)\\s*\\*\\s*(\\d+)").matcher(extra);
+            if (m.find()) {
+                count = Integer.parseInt(m.group(1));
+                price = Integer.parseInt(m.group(2));
+                return new int[]{count, price};
+            }
             Matcher m2 = Pattern.compile("(\\d+)").matcher(extra);
-            if (m2.find()) return Integer.parseInt(m2.group(1));
+            if (m2.find()) count = Integer.parseInt(m2.group(1));
         } catch (Exception ignored) {
         }
-        return 0;
+        return new int[]{count, price};
     }
 }
