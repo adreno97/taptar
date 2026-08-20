@@ -31,8 +31,8 @@ public class AddActivity extends Activity {
     private Spinner catSpinner, zoneSpinner;
     private CheckBox returnCb;
     private TextView payPreview;
-    private LinearLayout fuelBox;
-    private EditText litersEt, pricePerLiterEt, fuelMileageEt;
+    private LinearLayout fuelBox, discountRow;
+    private EditText litersEt, pricePerLiterEt, fuelMileageEt, discountEt;
     private TextView fuelHint;
 
     @Override
@@ -122,6 +122,26 @@ public class AddActivity extends Activity {
             fuelBox.setVisibility(View.GONE);
             root.addView(fuelBox);
 
+            discountRow = new LinearLayout(this);
+            discountRow.setOrientation(LinearLayout.HORIZONTAL);
+            discountRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            discountRow.setPadding(0, Util.dp(this, 8), 0, 0);
+            TextView dLabel = new TextView(this);
+            dLabel.setText("Скидка, %");
+            dLabel.setTextSize(15);
+            dLabel.setTextColor(0xFF37474F);
+            discountRow.addView(dLabel, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            discountEt = new EditText(this);
+            discountEt.setText("0");
+            discountEt.setTextSize(15);
+            discountEt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+            discountEt.setSingleLine(true);
+            discountEt.setBackgroundColor(0xFFFFFFFF);
+            discountEt.setPadding(Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8));
+            discountRow.addView(discountEt, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            discountRow.setVisibility(View.GONE);
+            root.addView(discountRow);
+
             fuelHint = new TextView(this);
             fuelHint.setTextSize(13);
             fuelHint.setTextColor(0xFF1565C0);
@@ -144,6 +164,7 @@ public class AddActivity extends Activity {
             litersEt.addTextChangedListener(tw);
             pricePerLiterEt.addTextChangedListener(tw);
             fuelMileageEt.addTextChangedListener(tw);
+            discountEt.addTextChangedListener(tw);
         }
 
         noteEt = addField(root, "Заметка (необязательно)", true);
@@ -270,13 +291,15 @@ public class AddActivity extends Activity {
         if (fuelBox != null) {
             fuelBox.setVisibility(fuel ? View.VISIBLE : View.GONE);
         }
-        if (amountEt != null) amountEt.setEnabled(!fuel);
+        if (discountRow != null) {
+            discountRow.setVisibility(fuel ? View.VISIBLE : View.GONE);
+        }
         if (fuel) recomputeFuel();
     }
 
     private void recomputeFuel() {
         if (fuelBox == null || !isFuel()) return;
-        double liters = 0, price = 0;
+        double liters = 0, price = 0, disc = 0;
         long mileage = 0;
         try {
             liters = Double.parseDouble(litersEt.getText().toString().replace(',', '.'));
@@ -285,25 +308,31 @@ public class AddActivity extends Activity {
             price = Double.parseDouble(pricePerLiterEt.getText().toString().replace(',', '.'));
         } catch (Exception ignored) {}
         try {
+            disc = Double.parseDouble(discountEt.getText().toString().replace(',', '.'));
+        } catch (Exception ignored) {}
+        if (disc < 0) disc = 0;
+        if (disc > 100) disc = 100;
+        try {
             mileage = Long.parseLong(fuelMileageEt.getText().toString().replace(",", "").trim());
         } catch (Exception ignored) {}
         if (liters > 0 && price > 0) {
-            long kop = Math.round(liters * price * 100.0);
+            long kop = Math.round(liters * price * (1.0 - disc / 100.0) * 100.0);
             amountEt.setText(String.format(java.util.Locale.US, "%.2f", kop / 100.0));
         }
         if (fuelHint != null) {
             StringBuilder hint = new StringBuilder();
+            if (liters > 0 && price > 0 && disc > 0) {
+                hint.append("Со скидкой ").append(String.format(java.util.Locale.US, "%.1f", disc)).append("%");
+            }
             if (mileage > 0) {
                 DbHelper.Record prev = db.getLastFuelBefore(mileage);
                 if (prev != null && prev.mileage < mileage) {
                     long dist = mileage - prev.mileage;
                     if (liters > 0 && dist > 0) {
+                        double costKm = liters * price / dist;
+                        if (hint.length() > 0) hint.append("\n");
                         hint.append("Расход: ").append(String.format(java.util.Locale.US, "%.1f", liters / dist * 100))
-                                .append(" л/100 км");
-                        if (liters > 0 && price > 0) {
-                            double costKm = liters * price / dist;
-                            hint.append(" · ").append(String.format(java.util.Locale.US, "%.2f", costKm)).append(" ₽/км");
-                        }
+                                .append(" л/100 км · ").append(String.format(java.util.Locale.US, "%.2f", costKm)).append(" ₽/км");
                     }
                 }
             }
@@ -389,7 +418,7 @@ public class AddActivity extends Activity {
             else db.addTrip(number, date, zone, ret, base, points, total, note);
         } else {
             long amount;
-            double fuelLiters = 0, fuelPrice = 0;
+            double fuelLiters = 0, fuelPrice = 0, fuelDisc = 0;
             long fuelMileage = 0;
             if (isFuel()) {
                 try {
@@ -399,13 +428,21 @@ public class AddActivity extends Activity {
                     fuelPrice = Double.parseDouble(pricePerLiterEt.getText().toString().replace(',', '.'));
                 } catch (Exception ignored) {}
                 try {
+                    fuelDisc = Double.parseDouble(discountEt.getText().toString().replace(',', '.'));
+                } catch (Exception ignored) {}
+                if (fuelDisc < 0) fuelDisc = 0;
+                if (fuelDisc > 100) fuelDisc = 100;
+                try {
                     fuelMileage = Long.parseLong(fuelMileageEt.getText().toString().replace(",", "").trim());
                 } catch (Exception ignored) {}
-                if (fuelLiters <= 0 || fuelPrice <= 0) {
-                    Toast.makeText(this, "Укажите литры и цену за литр", Toast.LENGTH_SHORT).show();
-                    return;
+                if (fuelLiters > 0 && fuelPrice > 0) {
+                    amount = Math.round(fuelLiters * fuelPrice * (1.0 - fuelDisc / 100.0) * 100.0);
+                } else {
+                    amount = Util.parseKopecks(amountEt.getText().toString());
+                    if (amount > 0 && fuelDisc > 0) {
+                        amount = Math.round(amount * (1.0 - fuelDisc / 100.0));
+                    }
                 }
-                amount = Math.round(fuelLiters * fuelPrice * 100.0);
             } else {
                 amount = Util.parseKopecks(amountEt.getText().toString());
             }
