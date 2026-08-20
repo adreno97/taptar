@@ -166,6 +166,18 @@ public class DbHelper extends SQLiteOpenHelper {
         getWritableDatabase().delete(income ? "trips" : "expenses", "_id=?", new String[]{String.valueOf(id)});
     }
 
+    public boolean hasTripNumber(String number) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT 1 FROM trips WHERE number=?", new String[]{number});
+        boolean exists = false;
+        try {
+            exists = c.moveToFirst();
+        } finally {
+            c.close();
+        }
+        return exists;
+    }
+
     public void addMaint(long date, long mileage, String works) {
         ContentValues cv = new ContentValues();
         cv.put("date", date);

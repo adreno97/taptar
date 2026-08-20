@@ -71,8 +71,10 @@ public class MainActivity extends Activity {
         btnRow3.setPadding(0, Util.dp(this, 8), 0, 0);
         Button settings = btn("⚙ Настройки", 0xFF6D4C41);
         Button export = btn("Экспорт Excel", 0xFF6D4C41);
+        Button importX = btn("Импорт Excel", 0xFF00897B);
         btnRow3.addView(settings);
         btnRow3.addView(export);
+        btnRow3.addView(importX);
         root.addView(btnRow3);
 
         LinearLayout btnRow4 = new LinearLayout(this);
@@ -147,6 +149,9 @@ public class MainActivity extends Activity {
         });
         export.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { exportExcel(); }
+        });
+        importX.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, ImportActivity.class)); }
         });
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
