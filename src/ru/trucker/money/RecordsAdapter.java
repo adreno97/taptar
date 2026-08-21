@@ -62,7 +62,11 @@ public class RecordsAdapter extends BaseAdapter {
 
         TextView title = new TextView(ctx);
         if (r.income) {
-            title.setText("🚚 Рейс №" + r.number);
+            if (r.seq > 0) {
+                title.setText("🚚 " + r.seq + ". Рейс " + r.number);
+            } else {
+                title.setText("🚚 Рейс №" + r.number);
+            }
         } else {
             title.setText(r.title);
         }

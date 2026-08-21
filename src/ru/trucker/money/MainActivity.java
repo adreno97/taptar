@@ -168,17 +168,44 @@ public class MainActivity extends Activity {
     }
 
     private List<Object> groupByPeriod(List<DbHelper.Record> records) {
+        boolean numbering = getSharedPreferences("app", 0).getBoolean("num_trips", false);
         List<Object> out = new ArrayList<>();
-        long curStart = -1;
-        for (DbHelper.Record r : records) {
-            long[] range = periodRange(r.date);
-            if (range[0] != curStart) {
-                curStart = range[0];
-                long[] totals = db.getTotals(range[0], range[1]);
-                String totalsTxt = "Доход: " + Util.rub(totals[0]) + "  ·  Расход: " + Util.rub(totals[1]);
-                out.add(new RecordsAdapter.Header(periodLabel(r.date), totalsTxt));
+        int i = 0;
+        while (i < records.size()) {
+            DbHelper.Record first = records.get(i);
+            long[] range = periodRange(first.date);
+
+            List<DbHelper.Record> period = new ArrayList<>();
+            while (i < records.size()) {
+                DbHelper.Record r = records.get(i);
+                if (periodRange(r.date)[0] != range[0]) break;
+                period.add(r);
+                i++;
             }
-            out.add(r);
+
+            long[] totals = db.getTotals(range[0], range[1]);
+            int tripTotal = db.getTripCount(range[0], range[1]);
+            StringBuilder totalsTxt = new StringBuilder("Доход: ").append(Util.rub(totals[0]))
+                    .append("  ·  Расход: ").append(Util.rub(totals[1]));
+            if (numbering) {
+                totalsTxt.append("  ·  Рейсов: ").append(tripTotal);
+            }
+            out.add(new RecordsAdapter.Header(periodLabel(first.date), totalsTxt.toString()));
+
+            if (numbering) {
+                int idx = tripTotal;
+                for (DbHelper.Record r : period) {
+                    if (r.income) {
+                        r.seq = idx;
+                        idx--;
+                    } else {
+                        r.seq = 0;
+                    }
+                }
+            } else {
+                for (DbHelper.Record r : period) r.seq = 0;
+            }
+            out.addAll(period);
         }
         return out;
     }

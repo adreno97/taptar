@@ -24,6 +24,7 @@ public class SettingsActivity extends Activity {
     private List<EditText> priceEds = new ArrayList<>();
     private EditText extraPriceEt, extraStartEt;
     private android.widget.Switch remindCb;
+    private android.widget.Switch numTripsCb;
     private EditText mileageEt, intervalEt;
     private Button nextToBtn;
     private long nextToDate = 0;
@@ -107,6 +108,18 @@ public class SettingsActivity extends Activity {
             @Override public void onClick(View v) { pickNextDate(); }
         });
 
+        TextView h4 = new TextView(this);
+        h4.setText("Список записей");
+        h4.setTextSize(15);
+        h4.setTextColor(0xFF37474F);
+        h4.setPadding(0, Util.dp(this, 18), 0, 0);
+        root.addView(h4);
+
+        numTripsCb = new android.widget.Switch(this);
+        numTripsCb.setText("Нумеровать рейсы по периодам (1–15 / 16–31)");
+        numTripsCb.setTextSize(14);
+        root.addView(numTripsCb);
+
         Button save = new Button(this);
         save.setText("Сохранить");
         save.setTextSize(16);
@@ -134,6 +147,7 @@ public class SettingsActivity extends Activity {
         extraStartEt.setText(String.valueOf(Zones.getExtraStart(this)));
 
         remindCb.setChecked(Reminders.isEnabled(this));
+        numTripsCb.setChecked(getSharedPreferences("app", 0).getBoolean("num_trips", false));
         mileageEt.setText(String.valueOf(Reminders.currentMileage(this)));
         intervalEt.setText(String.valueOf(Reminders.intervalKm(this)));
         nextToDate = Reminders.nextDate(this);
@@ -281,6 +295,9 @@ public class SettingsActivity extends Activity {
         Reminders.setNextDate(this, nextToDate);
         if (remindCb.isChecked()) Reminders.schedule(this);
         else Reminders.cancel(this);
+
+        getSharedPreferences("app", 0).edit()
+                .putBoolean("num_trips", numTripsCb.isChecked()).apply();
 
         Toast.makeText(this, "Настройки сохранены", Toast.LENGTH_SHORT).show();
         finish();

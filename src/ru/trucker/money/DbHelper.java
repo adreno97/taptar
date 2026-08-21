@@ -40,6 +40,7 @@ public class DbHelper extends SQLiteOpenHelper {
         public double liters;
         public double pricePerLiter;
         public long mileage;
+        public int seq; // display-only: trip index within payment period
     }
 
     public static class Maint {
