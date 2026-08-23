@@ -34,6 +34,8 @@ public class AddActivity extends Activity {
     private LinearLayout fuelBox, discountRow;
     private EditText litersEt, pricePerLiterEt, fuelMileageEt, discountEt;
     private TextView fuelHint;
+    private boolean loading, manualAmount, autoFilling;
+    private String lastAuto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,9 +151,22 @@ public class AddActivity extends Activity {
             root.addView(fuelHint, lpWrap());
 
             amountEt = addField(root, "Сумма расхода (руб)", false);
+            amountEt.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+                @Override public void onTextChanged(CharSequence s, int a, int b, int c) {
+                    if (loading) return;
+                    if (autoFilling && lastAuto != null && s.toString().equals(lastAuto)) {
+                        lastAuto = null;
+                        return;
+                    }
+                    manualAmount = true;
+                }
+                @Override public void afterTextChanged(android.text.Editable s) {}
+            });
 
             catSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
                 @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+                    manualAmount = false;
                     toggleFuel();
                 }
                 @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
@@ -217,7 +232,23 @@ public class AddActivity extends Activity {
                 } else {
                     int idx = indexOf(r.category);
                     if (idx >= 0) catSpinner.setSelection(idx);
-                    amountEt.setText(String.valueOf(r.amount / 100.0).replace(".0", ""));
+                    toggleFuel();
+                    if (isFuel()) {
+                        loading = true;
+                        if (r.liters > 0) litersEt.setText(Util.num(r.liters));
+                        if (r.pricePerLiter > 0) pricePerLiterEt.setText(Util.num(r.pricePerLiter));
+                        if (r.mileage > 0) fuelMileageEt.setText(String.valueOf(r.mileage));
+                        discountEt.setText(Util.num(r.discount));
+                        loading = false;
+                        amountEt.setText(String.valueOf(r.amount / 100.0).replace(".0", ""));
+                        double expected = r.liters > 0 && r.pricePerLiter > 0
+                                ? Math.round(r.liters * r.pricePerLiter * (1.0 - r.discount / 100.0) * 100.0)
+                                : 0;
+                        manualAmount = Math.abs(expected - r.amount) > 1;
+                        recomputeFuel();
+                    } else {
+                        amountEt.setText(String.valueOf(r.amount / 100.0).replace(".0", ""));
+                    }
                 }
                 noteEt.setText(r.note);
             }
@@ -298,7 +329,7 @@ public class AddActivity extends Activity {
     }
 
     private void recomputeFuel() {
-        if (fuelBox == null || !isFuel()) return;
+        if (fuelBox == null || !isFuel() || loading) return;
         double liters = 0, price = 0, disc = 0;
         long mileage = 0;
         try {
@@ -315,9 +346,12 @@ public class AddActivity extends Activity {
         try {
             mileage = Long.parseLong(fuelMileageEt.getText().toString().replace(",", "").trim());
         } catch (Exception ignored) {}
-        if (liters > 0 && price > 0) {
+        if (liters > 0 && price > 0 && !manualAmount) {
             long kop = Math.round(liters * price * (1.0 - disc / 100.0) * 100.0);
-            amountEt.setText(String.format(java.util.Locale.US, "%.2f", kop / 100.0));
+            lastAuto = String.format(java.util.Locale.US, "%.2f", kop / 100.0);
+            autoFilling = true;
+            amountEt.setText(lastAuto);
+            autoFilling = false;
         }
         if (fuelHint != null) {
             StringBuilder hint = new StringBuilder();
@@ -435,13 +469,15 @@ public class AddActivity extends Activity {
                 try {
                     fuelMileage = Long.parseLong(fuelMileageEt.getText().toString().replace(",", "").trim());
                 } catch (Exception ignored) {}
-                if (fuelLiters > 0 && fuelPrice > 0) {
+                if (fuelLiters > 0 && fuelPrice > 0 && !manualAmount) {
                     amount = Math.round(fuelLiters * fuelPrice * (1.0 - fuelDisc / 100.0) * 100.0);
-                } else {
+                } else if (fuelLiters <= 0 || fuelPrice <= 0) {
                     amount = Util.parseKopecks(amountEt.getText().toString());
                     if (amount > 0 && fuelDisc > 0) {
                         amount = Math.round(amount * (1.0 - fuelDisc / 100.0));
                     }
+                } else {
+                    amount = Util.parseKopecks(amountEt.getText().toString());
                 }
             } else {
                 amount = Util.parseKopecks(amountEt.getText().toString());
@@ -452,8 +488,8 @@ public class AddActivity extends Activity {
             }
             String cat = DbHelper.CATEGORIES[catSpinner.getSelectedItemPosition()];
             String note = noteEt.getText().toString().trim();
-            if (editId >= 0) db.updateExpense(editId, date, cat, amount, note, fuelLiters, fuelPrice, fuelMileage);
-            else db.addExpense(date, cat, amount, note, fuelLiters, fuelPrice, fuelMileage);
+            if (editId >= 0) db.updateExpense(editId, date, cat, amount, note, fuelLiters, fuelPrice, fuelMileage, fuelDisc);
+            else db.addExpense(date, cat, amount, note, fuelLiters, fuelPrice, fuelMileage, fuelDisc);
         }
         Toast.makeText(this, "Сохранено", Toast.LENGTH_SHORT).show();
         finish();

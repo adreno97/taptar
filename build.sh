@@ -17,7 +17,7 @@ echo "== javac =="
 echo "ok"
 
 echo "== d8 =="
-/usr/lib/jvm/java-23-openjdk-amd64/bin/java -cp /tmp/opencode/r8.jar com.android.tools.r8.D8 \
+/usr/lib/jvm/java-23-openjdk-amd64/bin/java -cp /home/adreno/android-sdk/cmdline-tools/latest/lib/r8.jar com.android.tools.r8.D8 \
     --release --min-api 21 --lib "$PLAT" --output build/dex $(find build/obj -name '*.class') 2>/dev/null
 cp build/dex/classes.dex build/stage/classes.dex
 echo "ok"

@@ -15,7 +15,7 @@ import java.util.Map;
 public class DbHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "trucker.db";
-    private static final int DB_VERSION = 5;
+    private static final int DB_VERSION = 6;
 
     public static final String[] CATEGORIES = {
             "Заправка", "Платные дороги", "Ремонт", "Запчасти", "Шины",
@@ -40,6 +40,7 @@ public class DbHelper extends SQLiteOpenHelper {
         public double liters;
         public double pricePerLiter;
         public long mileage;
+        public double discount;
         public int seq; // display-only: trip index within payment period
     }
 
@@ -74,7 +75,8 @@ public class DbHelper extends SQLiteOpenHelper {
                 "note TEXT," +
                 "liters REAL DEFAULT 0," +
                 "price_per_liter REAL DEFAULT 0," +
-                "mileage INTEGER DEFAULT 0)");
+                "mileage INTEGER DEFAULT 0," +
+                "discount REAL DEFAULT 0)");
         db.execSQL("CREATE TABLE maintenance (" +
                 "_id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "date INTEGER NOT NULL," +
@@ -102,6 +104,9 @@ public class DbHelper extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE expenses ADD COLUMN liters REAL DEFAULT 0");
             db.execSQL("ALTER TABLE expenses ADD COLUMN price_per_liter REAL DEFAULT 0");
             db.execSQL("ALTER TABLE expenses ADD COLUMN mileage INTEGER DEFAULT 0");
+        }
+        if (oldV < 6) {
+            db.execSQL("ALTER TABLE expenses ADD COLUMN discount REAL DEFAULT 0");
         }
     }
 
@@ -132,10 +137,14 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public void addExpense(long date, String category, long amount, String note) {
-        addExpense(date, category, amount, note, 0, 0, 0);
+        addExpense(date, category, amount, note, 0, 0, 0, 0);
     }
 
     public void addExpense(long date, String category, long amount, String note, double liters, double pricePerLiter, long mileage) {
+        addExpense(date, category, amount, note, liters, pricePerLiter, mileage, 0);
+    }
+
+    public void addExpense(long date, String category, long amount, String note, double liters, double pricePerLiter, long mileage, double discount) {
         ContentValues cv = new ContentValues();
         cv.put("date", date);
         cv.put("category", category);
@@ -144,14 +153,19 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("liters", liters);
         cv.put("price_per_liter", pricePerLiter);
         cv.put("mileage", mileage);
+        cv.put("discount", discount);
         getWritableDatabase().insert("expenses", null, cv);
     }
 
     public void updateExpense(long id, long date, String category, long amount, String note) {
-        updateExpense(id, date, category, amount, note, 0, 0, 0);
+        updateExpense(id, date, category, amount, note, 0, 0, 0, 0);
     }
 
     public void updateExpense(long id, long date, String category, long amount, String note, double liters, double pricePerLiter, long mileage) {
+        updateExpense(id, date, category, amount, note, liters, pricePerLiter, mileage, 0);
+    }
+
+    public void updateExpense(long id, long date, String category, long amount, String note, double liters, double pricePerLiter, long mileage, double discount) {
         ContentValues cv = new ContentValues();
         cv.put("date", date);
         cv.put("category", category);
@@ -160,6 +174,7 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put("liters", liters);
         cv.put("price_per_liter", pricePerLiter);
         cv.put("mileage", mileage);
+        cv.put("discount", discount);
         getWritableDatabase().update("expenses", cv, "_id=?", new String[]{String.valueOf(id)});
     }
 
@@ -233,8 +248,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public Record getRecord(long id, boolean income) {
         String sql = income
-                ? "SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0 FROM trips WHERE _id=?"
-                : "SELECT _id, 0 AS inc, date, category, 0, 0, 0, 0, amount AS amt, category AS cat, note, liters, price_per_liter, mileage FROM expenses WHERE _id=?";
+                ? "SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0, 0 FROM trips WHERE _id=?"
+                : "SELECT _id, 0 AS inc, date, category, 0, 0, 0, 0, amount AS amt, category AS cat, note, liters, price_per_liter, mileage, discount FROM expenses WHERE _id=?";
         List<Record> l = queryRecords(sql, new String[]{String.valueOf(id)});
         return l.isEmpty() ? null : l.get(0);
     }
@@ -252,17 +267,17 @@ public class DbHelper extends SQLiteOpenHelper {
         String typeA = typeFilter == 2 ? " AND 0" : "";
         String typeB = typeFilter == 1 ? " AND 0" : "";
 
-        String sql = "SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0 FROM trips WHERE " + period + "1" + typeA +
+        String sql = "SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0, 0 FROM trips WHERE " + period + "1" + typeA +
                 " UNION ALL " +
-                "SELECT _id, 0 AS inc, date, category, 0, 0, 0, 0, amount AS amt, category AS cat, note, liters, price_per_liter, mileage FROM expenses WHERE " + period + "1" + typeB +
+                "SELECT _id, 0 AS inc, date, category, 0, 0, 0, 0, amount AS amt, category AS cat, note, liters, price_per_liter, mileage, discount FROM expenses WHERE " + period + "1" + typeB +
                 " ORDER BY date DESC, _id DESC";
         return queryRecords(sql, args.toArray(new String[0]));
     }
 
     public List<Record> getRecent(int limit) {
-        return queryRecords("SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0 FROM trips " +
+        return queryRecords("SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0, 0 FROM trips " +
                 "UNION ALL " +
-                "SELECT _id, 0 AS inc, date, category, 0, 0, 0, 0, amount AS amt, category AS cat, note, liters, price_per_liter, mileage FROM expenses " +
+                "SELECT _id, 0 AS inc, date, category, 0, 0, 0, 0, amount AS amt, category AS cat, note, liters, price_per_liter, mileage, discount FROM expenses " +
                 "ORDER BY date DESC, _id DESC LIMIT " + limit, null);
     }
 
@@ -286,6 +301,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 r.liters = c.getDouble(11);
                 r.pricePerLiter = c.getDouble(12);
                 r.mileage = c.getLong(13);
+                r.discount = c.getDouble(14);
                 if (r.income) {
                     r.number = r.title;
                     StringBuilder sub = new StringBuilder(Zones.name(r.zone));
@@ -293,7 +309,16 @@ public class DbHelper extends SQLiteOpenHelper {
                     if (r.numPoints > 0) sub.append(" · выгрузка: ").append(r.numPoints).append(" т.");
                     r.sub = sub.toString();
                 } else {
-                    r.sub = r.note;
+                    if (r.liters > 0) {
+                        StringBuilder sub = new StringBuilder(Util.num(r.liters)).append(" л");
+                        if (r.pricePerLiter > 0) sub.append(" × ").append(Util.num(r.pricePerLiter)).append(" ₽/л");
+                        if (r.discount > 0) sub.append(" · скидка ").append(Util.num(r.discount)).append("%");
+                        if (r.mileage > 0) sub.append(" · ").append(r.mileage).append(" км");
+                        if (r.note != null && !r.note.isEmpty()) sub.append(" · ").append(r.note);
+                        r.sub = sub.toString();
+                    } else {
+                        r.sub = r.note;
+                    }
                 }
                 out.add(r);
             }
@@ -387,7 +412,7 @@ public class DbHelper extends SQLiteOpenHelper {
     /** Latest fuel fill-up with mileage less than the given value, sorted by mileage desc. */
     public Record getLastFuelBefore(long mileage) {
         List<Record> l = queryRecords(
-                "SELECT _id, 0, date, category, 0, 0, 0, 0, amount, category, note, liters, price_per_liter, mileage " +
+                "SELECT _id, 0, date, category, 0, 0, 0, 0, amount, category, note, liters, price_per_liter, mileage, discount " +
                 "FROM expenses WHERE category='Заправка' AND mileage>0 AND mileage<? " +
                 "ORDER BY mileage DESC LIMIT 1",
                 new String[]{String.valueOf(mileage)});
@@ -396,30 +421,37 @@ public class DbHelper extends SQLiteOpenHelper {
 
     /** Fuel stats over a period: {totalLiters, totalAmountKop, distanceKm, fillCount}. start<0 → all time. */
     public double[] getFuelStats(long start, long end) {
-        String sql = "SELECT liters, amount, mileage FROM expenses " +
-                "WHERE category='Заправка' AND liters>0 AND mileage>0";
-        String[] args = null;
-        if (start >= 0) {
-            sql += " AND date>=? AND date<?";
-            args = new String[]{String.valueOf(start), String.valueOf(end)};
-        }
-        sql += " ORDER BY mileage ASC";
+        String periodSql = start >= 0 ? " AND date>=? AND date<?" : "";
+        String[] periodArgs = start >= 0 ? new String[]{String.valueOf(start), String.valueOf(end)} : null;
+
         double liters = 0;
         long amount = 0;
-        long minMileage = Long.MAX_VALUE, maxMileage = 0;
         int count = 0;
-        Cursor c = getReadableDatabase().rawQuery(sql, args);
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT liters, amount FROM expenses WHERE category='Заправка' AND liters>0" + periodSql,
+                periodArgs);
         try {
             while (c.moveToNext()) {
                 liters += c.getDouble(0);
                 amount += c.getLong(1);
-                long m = c.getLong(2);
-                if (m < minMileage) minMileage = m;
-                if (m > maxMileage) maxMileage = m;
                 count++;
             }
         } finally {
             c.close();
+        }
+
+        long minMileage = Long.MAX_VALUE, maxMileage = 0;
+        Cursor c2 = getReadableDatabase().rawQuery(
+                "SELECT mileage FROM expenses WHERE category='Заправка' AND liters>0 AND mileage>0" + periodSql,
+                periodArgs);
+        try {
+            while (c2.moveToNext()) {
+                long m = c2.getLong(0);
+                if (m < minMileage) minMileage = m;
+                if (m > maxMileage) maxMileage = m;
+            }
+        } finally {
+            c2.close();
         }
         double dist = maxMileage > minMileage ? maxMileage - minMileage : 0;
         return new double[]{liters, amount, dist, count};

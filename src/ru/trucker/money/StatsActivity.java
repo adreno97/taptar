@@ -245,11 +245,19 @@ public class StatsActivity extends Activity {
             fuelTxt.append("Заправок: ").append((int) fuel[3]).append("\n");
             fuelTxt.append("Литров: ").append(String.format(java.util.Locale.US, "%.1f", fuel[0])).append("\n");
             fuelTxt.append("Потрачено: ").append(Util.rub((long) fuel[1])).append("\n");
+            if (fuel[0] > 0) {
+                double avgPrice = (fuel[1] / 100.0) / fuel[0];
+                fuelTxt.append("Средняя цена: ").append(String.format(java.util.Locale.US, "%.2f", avgPrice)).append(" ₽/л\n");
+            }
             if (fuel[2] > 0) {
                 fuelTxt.append("Расход: ").append(String.format(java.util.Locale.US, "%.1f", fuel[0] / fuel[2] * 100))
                         .append(" л/100 км\n");
                 fuelTxt.append("Стоимость: ").append(String.format(java.util.Locale.US, "%.2f", (fuel[1] / 100.0) / fuel[2]))
                         .append(" ₽/км\n");
+            }
+            if (trips > 0) {
+                fuelTxt.append("Литров на рейс: ").append(String.format(java.util.Locale.US, "%.1f", fuel[0] / trips))
+                        .append(" л\n");
             }
             TextView fuelTv = new TextView(this);
             fuelTv.setText(fuelTxt.toString());

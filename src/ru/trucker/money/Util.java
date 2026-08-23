@@ -35,6 +35,13 @@ public class Util {
         }
     }
 
+    public static String num(double v) {
+        String s = String.format(Locale.US, "%.2f", v);
+        if (s.endsWith(".00")) s = s.substring(0, s.length() - 3);
+        else if (s.endsWith("0")) s = s.substring(0, s.length() - 1);
+        return s;
+    }
+
     public static String monthYear() {
         return DateFormat.format("MMMM yyyy", Calendar.getInstance()).toString();
     }
