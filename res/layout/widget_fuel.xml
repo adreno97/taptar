@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FF1E2A38"
+    android:padding="6dp">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Таптар — быстрая запись"
+        android:textColor="#FFFFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
+        android:paddingBottom="4dp" />
+
+    <Button
+        android:id="@+id/btn_fuel"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="⛽ Заправка"
+        android:textColor="#FFFFFFFF"
+        android:background="#FF2E7D32"
+        android:textSize="13sp"
+        android:layout_marginBottom="2dp" />
+
+    <Button
+        android:id="@+id/btn_expense"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="+ Расход"
+        android:textColor="#FFFFFFFF"
+        android:background="#FFC62828"
+        android:textSize="13sp" />
+</LinearLayout>

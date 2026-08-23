@@ -1,10 +1,14 @@
 package ru.trucker.money;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -36,9 +40,11 @@ public class AddActivity extends Activity {
     private TextView fuelHint;
     private boolean loading, manualAmount, autoFilling;
     private String lastAuto;
+    private String initialState = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
         income = "income".equals(getIntent().getStringExtra("mode"));
@@ -53,15 +59,15 @@ public class AddActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(Util.dp(this, 16), Util.dp(this, 16), Util.dp(this, 16), Util.dp(this, 24));
-        root.setBackgroundColor(0xFFF0F2F5);
+        root.setBackgroundColor(Ui.bg(this));
         sv.addView(root);
 
         date = System.currentTimeMillis();
         dateBtn = new Button(this);
         dateBtn.setAllCaps(false);
         dateBtn.setText("Дата: " + Util.date(date));
-        dateBtn.setTextColor(0xFF1565C0);
-        dateBtn.setBackgroundColor(0xFFFFFFFF);
+        dateBtn.setTextColor(Ui.accentText(this));
+        dateBtn.setBackgroundColor(Ui.card(this));
         root.addView(dateBtn, lpWrap());
         dateBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { pickDate(); }
@@ -74,12 +80,13 @@ public class AddActivity extends Activity {
                     android.R.layout.simple_spinner_item, zoneNames());
             za.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             zoneSpinner.setAdapter(za);
-            zoneSpinner.setBackgroundColor(0xFFFFFFFF);
+            zoneSpinner.setBackgroundColor(Ui.field(this));
             root.addView(zoneSpinner, spinnerLp());
 
             returnCb = new CheckBox(this);
             returnCb.setText("Был возврат (+50% к оплате)");
             returnCb.setTextSize(16);
+            returnCb.setTextColor(Ui.primary(this));
             LinearLayout.LayoutParams cbP = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             cbP.topMargin = Util.dp(this, 8);
@@ -88,7 +95,7 @@ public class AddActivity extends Activity {
             payPreview = new TextView(this);
             payPreview.setTextSize(18);
             payPreview.setTypeface(payPreview.getTypeface(), android.graphics.Typeface.BOLD);
-            payPreview.setTextColor(0xFF2E7D32);
+            payPreview.setTextColor(Ui.income(this));
             LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             pp.topMargin = Util.dp(this, 8);
@@ -112,7 +119,7 @@ public class AddActivity extends Activity {
                     android.R.layout.simple_spinner_item, DbHelper.CATEGORIES);
             a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             catSpinner.setAdapter(a);
-            catSpinner.setBackgroundColor(0xFFFFFFFF);
+            catSpinner.setBackgroundColor(Ui.field(this));
             root.addView(catSpinner, spinnerLp());
 
             fuelBox = new LinearLayout(this);
@@ -131,14 +138,14 @@ public class AddActivity extends Activity {
             TextView dLabel = new TextView(this);
             dLabel.setText("Скидка, %");
             dLabel.setTextSize(15);
-            dLabel.setTextColor(0xFF37474F);
+            dLabel.setTextColor(Ui.title(this));
             discountRow.addView(dLabel, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             discountEt = new EditText(this);
             discountEt.setText("0");
             discountEt.setTextSize(15);
             discountEt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
             discountEt.setSingleLine(true);
-            discountEt.setBackgroundColor(0xFFFFFFFF);
+            discountEt.setBackgroundColor(Ui.field(this));
             discountEt.setPadding(Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8));
             discountRow.addView(discountEt, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             discountRow.setVisibility(View.GONE);
@@ -146,7 +153,7 @@ public class AddActivity extends Activity {
 
             fuelHint = new TextView(this);
             fuelHint.setTextSize(13);
-            fuelHint.setTextColor(0xFF1565C0);
+            fuelHint.setTextColor(Ui.accentText(this));
             fuelHint.setVisibility(View.GONE);
             root.addView(fuelHint, lpWrap());
 
@@ -187,8 +194,8 @@ public class AddActivity extends Activity {
         Button save = new Button(this);
         save.setText(editId >= 0 ? "Сохранить изменения" : "Добавить запись");
         save.setTextSize(16);
-        save.setTextColor(0xFFFFFFFF);
-        save.setBackgroundColor(income ? 0xFF2E7D32 : 0xFFC62828);
+        save.setTextColor(Ui.buttonText(this));
+        save.setBackgroundColor(income ? Ui.income(this) : Ui.expense(this));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 52));
         slp.topMargin = Util.dp(this, 16);
@@ -200,8 +207,8 @@ public class AddActivity extends Activity {
         if (editId >= 0) {
             Button del = new Button(this);
             del.setText("Удалить запись");
-            del.setTextColor(0xFFC62828);
-            del.setBackgroundColor(0xFFFFEBEE);
+            del.setTextColor(Ui.expense(this));
+            del.setBackgroundColor(Ui.dangerBg(this));
             LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 44));
             dlp.topMargin = Util.dp(this, 8);
@@ -216,6 +223,29 @@ public class AddActivity extends Activity {
         }
 
         setContentView(sv);
+
+        if (!income && editId < 0) {
+            String presetCat = getIntent().getStringExtra("category");
+            if (presetCat != null) {
+                int idx = indexOf(presetCat);
+                catSpinner.setSelection(idx);
+            } else {
+                String lastCat = getSharedPreferences("app", 0).getString("last_cat", null);
+                if (lastCat != null) {
+                    int idx = indexOf(lastCat);
+                    catSpinner.setSelection(idx);
+                }
+            }
+            if (isFuel()) {
+                String p = getSharedPreferences("app", 0).getString("last_price", null);
+                if (p != null) pricePerLiterEt.setText(p);
+                String d = getSharedPreferences("app", 0).getString("last_discount", null);
+                if (d != null) discountEt.setText(d);
+            }
+            toggleFuel();
+        }
+
+        setupIme();
 
         if (editId >= 0) {
             DbHelper.Record r = db.getRecord(editId, income);
@@ -254,6 +284,73 @@ public class AddActivity extends Activity {
             }
         }
         if (income) updatePreview();
+        initialState = state();
+        if (!income && editId < 0 && isFuel()) {
+            litersEt.requestFocus();
+        }
+    }
+
+    private void setupIme() {
+        if (income) {
+            chain(numberEt, extraEt);
+            chain(extraEt, noteEt);
+        } else {
+            chain(litersEt, pricePerLiterEt);
+            chain(pricePerLiterEt, fuelMileageEt);
+            chain(fuelMileageEt, discountEt);
+            chain(discountEt, amountEt);
+            chain(amountEt, noteEt);
+        }
+        noteEt.setImeOptions(EditorInfo.IME_ACTION_DONE);
+    }
+
+    private void chain(final EditText from, final EditText to) {
+        from.setImeOptions(EditorInfo.IME_ACTION_NEXT);
+        from.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                    to.requestFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
+    }
+
+    private String state() {
+        StringBuilder s = new StringBuilder();
+        s.append(date).append('|');
+        if (income) {
+            s.append(numberEt.getText()).append('|')
+             .append(extraEt.getText()).append('|')
+             .append(returnCb.isChecked()).append('|')
+             .append(zoneSpinner.getSelectedItemPosition());
+        } else {
+            s.append(catSpinner.getSelectedItemPosition()).append('|')
+             .append(amountEt.getText()).append('|')
+             .append(litersEt.getText()).append('|')
+             .append(pricePerLiterEt.getText()).append('|')
+             .append(fuelMileageEt.getText()).append('|')
+             .append(discountEt.getText());
+        }
+        s.append('|').append(noteEt.getText());
+        return s.toString();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!initialState.equals(state())) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Закрыть без сохранения?")
+                    .setMessage("В форме есть изменения. Они не будут сохранены.")
+                    .setPositiveButton("Закрыть", new DialogInterface.OnClickListener() {
+                        @Override public void onClick(DialogInterface d, int w) { AddActivity.super.onBackPressed(); }
+                    })
+                    .setNegativeButton("Отмена", null)
+                    .show();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     private String[] zoneNames() {
@@ -306,7 +403,7 @@ public class AddActivity extends Activity {
         et.setHint(hint);
         et.setTextSize(14);
         et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        et.setBackgroundColor(0xFFFFFFFF);
+        et.setBackgroundColor(Ui.field(this));
         et.setPadding(Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10));
         box.addView(et, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         return et;
@@ -382,7 +479,7 @@ public class AddActivity extends Activity {
         if (!multi) {
             et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         }
-        et.setBackgroundColor(0xFFFFFFFF);
+        et.setBackgroundColor(Ui.field(this));
         et.setPadding(Util.dp(this, 10), Util.dp(this, 12), Util.dp(this, 10), Util.dp(this, 12));
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -488,6 +585,13 @@ public class AddActivity extends Activity {
             }
             String cat = DbHelper.CATEGORIES[catSpinner.getSelectedItemPosition()];
             String note = noteEt.getText().toString().trim();
+            android.content.SharedPreferences.Editor e = getSharedPreferences("app", 0).edit()
+                    .putString("last_cat", cat);
+            if (isFuel()) {
+                e.putString("last_price", Util.num(fuelPrice));
+                e.putString("last_discount", Util.num(fuelDisc));
+            }
+            e.apply();
             if (editId >= 0) db.updateExpense(editId, date, cat, amount, note, fuelLiters, fuelPrice, fuelMileage, fuelDisc);
             else db.addExpense(date, cat, amount, note, fuelLiters, fuelPrice, fuelMileage, fuelDisc);
         }

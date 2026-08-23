@@ -18,6 +18,7 @@ public class MoreActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
         setTitle("Ещё");
@@ -26,7 +27,7 @@ public class MoreActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(Util.dp(this, 12), Util.dp(this, 12), Util.dp(this, 12), Util.dp(this, 20));
-        root.setBackgroundColor(0xFFF0F2F5);
+        root.setBackgroundColor(Ui.bg(this));
         sv.addView(root);
 
         row(root, "📥 Импорт Excel", "Загрузить рейсы из таблицы логиста (.xls / .xlsx)", new View.OnClickListener() {
@@ -56,7 +57,7 @@ public class MoreActivity extends Activity {
         TextView footer = new TextView(this);
         footer.setText("Разработчик: adreno97 · adreno97@mail.ru");
         footer.setTextSize(12);
-        footer.setTextColor(0xFF90A4AE);
+        footer.setTextColor(Ui.sub(this));
         footer.setGravity(Gravity.CENTER);
         footer.setPadding(0, Util.dp(this, 20), 0, Util.dp(this, 4));
         root.addView(footer);
@@ -75,9 +76,10 @@ public class MoreActivity extends Activity {
 
     private void row(LinearLayout root, String title, String desc, View.OnClickListener onClick) {
         Button b = new Button(this);
-        b.setBackgroundColor(0xFFFFFFFF);
+        b.setBackgroundColor(Ui.card(this));
         b.setAllCaps(false);
         b.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+        b.setTextColor(Ui.primary(this));
         b.setPadding(Util.dp(this, 16), 0, Util.dp(this, 16), 0);
         b.setText(title + "\n" + desc);
         b.setTextSize(15);

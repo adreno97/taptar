@@ -30,33 +30,34 @@ public class MaintenanceActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(Util.dp(this, 12), Util.dp(this, 12), Util.dp(this, 12), 0);
-        root.setBackgroundColor(0xFFF0F2F5);
+        root.setBackgroundColor(Ui.bg(this));
 
         TextView h = new TextView(this);
         h.setText("Обслуживание ТС");
         h.setTextSize(18);
-        h.setTextColor(0xFF37474F);
+        h.setTextColor(Ui.title(this));
         h.setTypeface(h.getTypeface(), Typeface.BOLD);
         root.addView(h);
 
         LinearLayout btnRow = new LinearLayout(this);
         btnRow.setOrientation(LinearLayout.HORIZONTAL);
         btnRow.setPadding(0, Util.dp(this, 10), 0, 0);
-        Button add = btn("+ Запись", 0xFF1565C0);
-        Button pdf = btn("Экспорт PDF", 0xFF6D4C41);
+        Button add = btn("+ Запись", Ui.accent(this));
+        Button pdf = btn("Экспорт PDF", Ui.brown(this));
         btnRow.addView(add);
         btnRow.addView(pdf);
         root.addView(btnRow);
 
         listView = new ListView(this);
         listView.setDividerHeight(0);
-        listView.setBackgroundColor(0xFFFFFFFF);
+        listView.setBackgroundColor(Ui.card(this));
         root.addView(listView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
@@ -108,7 +109,7 @@ public class MaintenanceActivity extends Activity {
     private Button btn(String text, int color) {
         Button b = new Button(this);
         b.setText(text);
-        b.setTextColor(0xFFFFFFFF);
+        b.setTextColor(Ui.buttonText(this));
         b.setBackgroundColor(color);
         b.setTextSize(14);
         b.setLayoutParams(new LinearLayout.LayoutParams(0, Util.dp(this, 46), 1f));
@@ -152,7 +153,7 @@ public class MaintenanceActivity extends Activity {
             TextView title = new TextView(MaintenanceActivity.this);
             title.setText(Util.date(m.date) + "  ·  " + m.mileage + " км");
             title.setTextSize(15);
-            title.setTextColor(0xFF263238);
+            title.setTextColor(Ui.primary(MaintenanceActivity.this));
             title.setTypeface(title.getTypeface(), Typeface.BOLD);
             top.addView(title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             row.addView(top);
@@ -160,11 +161,11 @@ public class MaintenanceActivity extends Activity {
             TextView works = new TextView(MaintenanceActivity.this);
             works.setText(m.works == null || m.works.isEmpty() ? "—" : m.works);
             works.setTextSize(13);
-            works.setTextColor(0xFF546E7A);
+            works.setTextColor(Ui.gray(MaintenanceActivity.this));
             row.addView(works);
 
             View div = new View(MaintenanceActivity.this);
-            div.setBackgroundColor(0xFFECEFF1);
+            div.setBackgroundColor(Ui.divider(MaintenanceActivity.this));
             row.addView(div, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
             return row;

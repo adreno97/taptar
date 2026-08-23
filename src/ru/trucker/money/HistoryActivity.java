@@ -3,6 +3,7 @@ package ru.trucker.money;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -10,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,17 +27,18 @@ public class HistoryActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(0xFFF0F2F5);
+        root.setBackgroundColor(Ui.bg(this));
 
         LinearLayout filters = new LinearLayout(this);
         filters.setOrientation(LinearLayout.HORIZONTAL);
         filters.setPadding(Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8));
-        filters.setBackgroundColor(0xFFFFFFFF);
+        filters.setBackgroundColor(Ui.card(this));
 
         final Spinner period = new Spinner(this);
         period.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,
@@ -65,6 +68,11 @@ public class HistoryActivity extends Activity {
         period.setOnItemSelectedListener(l);
         type.setOnItemSelectedListener(l);
 
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
+                if (pos >= 0 && pos < data.size()) showRecordActions(data.get(pos));
+            }
+        });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
                 final DbHelper.Record r = data.get(pos);
@@ -82,6 +90,41 @@ public class HistoryActivity extends Activity {
                 return true;
             }
         });
+    }
+
+    private void showRecordActions(final DbHelper.Record r) {
+        String title = r.income ? "Рейс " + r.number : r.category;
+        new AlertDialog.Builder(HistoryActivity.this)
+                .setTitle(title)
+                .setMessage(Util.date(r.date) + " · " + Util.rub(r.amount))
+                .setItems(new String[]{"Редактировать", "Дублировать"}, new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface d, int which) {
+                        if (which == 0) {
+                            Intent i = new Intent(HistoryActivity.this, AddActivity.class);
+                            i.putExtra("mode", r.income ? "income" : "expense");
+                            i.putExtra("edit_id", r.id);
+                            i.putExtra("edit_income", r.income);
+                            startActivity(i);
+                        } else {
+                            if (!r.income) {
+                                db.addExpense(r.date, r.category, r.amount, r.note, r.liters, r.pricePerLiter, r.mileage, r.discount);
+                            } else {
+                                String base = r.number;
+                                String num = base;
+                                int n = 2;
+                                while (db.hasTripNumber(num)) {
+                                    num = base + " (" + n + ")";
+                                    n++;
+                                }
+                                db.addTrip(num, r.date, r.zone, r.isReturn, r.basePrice, r.numPoints, r.amount, r.note);
+                            }
+                            Toast.makeText(HistoryActivity.this, "Запись продублирована", Toast.LENGTH_SHORT).show();
+                            reload();
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
     }
 
     private void reload() {

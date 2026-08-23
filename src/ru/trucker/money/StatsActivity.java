@@ -28,17 +28,18 @@ public class StatsActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(0xFFF0F2F5);
+        root.setBackgroundColor(Ui.bg(this));
 
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setPadding(Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8));
-        top.setBackgroundColor(0xFFFFFFFF);
+        top.setBackgroundColor(Ui.card(this));
         Spinner period = new Spinner(this);
         period.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,
                 new String[]{"Текущий месяц", "Прошлый месяц", "Выбрать месяц…", "Произвольный период", "Всё время"}));
@@ -47,7 +48,7 @@ public class StatsActivity extends Activity {
 
         rangeRow = new LinearLayout(this);
         rangeRow.setOrientation(LinearLayout.HORIZONTAL);
-        rangeRow.setBackgroundColor(0xFFFFFFFF);
+        rangeRow.setBackgroundColor(Ui.card(this));
         fromBtn = rangeBtn("От");
         toBtn = rangeBtn("До");
         rangeRow.addView(fromBtn, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
@@ -84,8 +85,8 @@ public class StatsActivity extends Activity {
         b.setText(text);
         b.setAllCaps(false);
         b.setTextSize(13);
-        b.setTextColor(0xFF1565C0);
-        b.setBackgroundColor(0xFFF0F2F5);
+        b.setTextColor(Ui.accentText(this));
+        b.setBackgroundColor(Ui.bg(this));
         return b;
     }
 
@@ -204,7 +205,7 @@ public class StatsActivity extends Activity {
         TextView h = new TextView(this);
         h.setText("Статистика " + periodLabel);
         h.setTextSize(16);
-        h.setTextColor(0xFF37474F);
+        h.setTextColor(Ui.title(this));
         h.setTypeface(h.getTypeface(), android.graphics.Typeface.BOLD);
         body.addView(h);
 
@@ -215,7 +216,7 @@ public class StatsActivity extends Activity {
         summary.setText("Доход: " + Util.rub(t[0]) + "\n"
                 + "Расход: " + Util.rub(t[1]) + "\n"
                 + "Прибыль: " + Util.rub(profit));
-        summary.setTextColor(profit >= 0 ? 0xFF2E7D32 : 0xFFC62828);
+        summary.setTextColor(profit >= 0 ? Ui.income(this) : Ui.expense(this));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         slp.topMargin = Util.dp(this, 10);
@@ -226,7 +227,7 @@ public class StatsActivity extends Activity {
         TextView tripTv = new TextView(this);
         tripTv.setText("Выполнено рейсов: " + trips);
         tripTv.setTextSize(14);
-        tripTv.setTextColor(0xFF546E7A);
+        tripTv.setTextColor(Ui.gray(this));
         body.addView(tripTv);
 
         double[] fuel = db.getFuelStats(start, end);
@@ -234,7 +235,7 @@ public class StatsActivity extends Activity {
             TextView hF = new TextView(this);
             hF.setText("Топливо");
             hF.setTextSize(16);
-            hF.setTextColor(0xFF37474F);
+            hF.setTextColor(Ui.title(this));
             hF.setTypeface(hF.getTypeface(), android.graphics.Typeface.BOLD);
             LinearLayout.LayoutParams hFp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -262,14 +263,14 @@ public class StatsActivity extends Activity {
             TextView fuelTv = new TextView(this);
             fuelTv.setText(fuelTxt.toString());
             fuelTv.setTextSize(14);
-            fuelTv.setTextColor(0xFF546E7A);
+            fuelTv.setTextColor(Ui.gray(this));
             body.addView(fuelTv);
         }
 
         TextView h2 = new TextView(this);
         h2.setText("Расходы по категориям");
         h2.setTextSize(16);
-        h2.setTextColor(0xFF37474F);
+        h2.setTextColor(Ui.title(this));
         h2.setTypeface(h2.getTypeface(), android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams h2p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -283,7 +284,7 @@ public class StatsActivity extends Activity {
         if (cats.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("Пока нет записей о расходах за этот период.");
-            empty.setTextColor(0xFF90A4AE);
+            empty.setTextColor(Ui.sub(this));
             empty.setPadding(0, Util.dp(this, 8), 0, 0);
             body.addView(empty);
             return;
@@ -301,13 +302,13 @@ public class StatsActivity extends Activity {
             TextView name = new TextView(this);
             name.setText(e.getKey());
             name.setTextSize(14);
-            name.setTextColor(0xFF455A64);
+            name.setTextColor(Ui.primary(this));
             row.addView(name, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
             TextView valTv = new TextView(this);
             valTv.setText(Util.rub(val) + "  " + Math.round(frac * 100) + "%");
             valTv.setTextSize(14);
-            valTv.setTextColor(0xFFC62828);
+            valTv.setTextColor(Ui.expense(this));
             row.addView(valTv);
             body.addView(row);
 
@@ -319,11 +320,11 @@ public class StatsActivity extends Activity {
             body.addView(bar, bp);
 
             View fill = new View(this);
-            fill.setBackgroundColor(0xFFEF5350);
+            fill.setBackgroundColor(Ui.barFill(this));
             bar.addView(fill, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,
                     frac > 0 ? frac : 0.001f));
             View rest = new View(this);
-            rest.setBackgroundColor(0xFFECEFF1);
+            rest.setBackgroundColor(Ui.barRest(this));
             bar.addView(rest, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,
                     frac > 0 ? 1f - frac : 0.999f));
         }
@@ -331,7 +332,7 @@ public class StatsActivity extends Activity {
         TextView totalTv = new TextView(this);
         totalTv.setText("Итого расходов: " + Util.rub(total));
         totalTv.setTextSize(15);
-        totalTv.setTextColor(0xFF37474F);
+        totalTv.setTextColor(Ui.title(this));
         totalTv.setTypeface(totalTv.getTypeface(), android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);

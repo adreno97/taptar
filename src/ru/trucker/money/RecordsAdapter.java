@@ -54,7 +54,7 @@ public class RecordsAdapter extends BaseAdapter {
         }
 
         DbHelper.Record r = (DbHelper.Record) item;
-        int accent = r.income ? 0xFF2E7D32 : 0xFFC62828;
+        int accent = r.income ? Ui.income(ctx) : Ui.expense(ctx);
 
         LinearLayout top = new LinearLayout(ctx);
         top.setOrientation(LinearLayout.HORIZONTAL);
@@ -71,7 +71,7 @@ public class RecordsAdapter extends BaseAdapter {
             title.setText(r.title);
         }
         title.setTextSize(15);
-        title.setTextColor(0xFF263238);
+        title.setTextColor(Ui.primary(ctx));
         title.setSingleLine(true);
         top.addView(title, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
 
@@ -88,11 +88,11 @@ public class RecordsAdapter extends BaseAdapter {
         TextView subTv = new TextView(ctx);
         subTv.setText(sub.toString());
         subTv.setTextSize(12);
-        subTv.setTextColor(0xFF90A4AE);
+        subTv.setTextColor(Ui.sub(ctx));
         row.addView(subTv);
 
         View divider = new View(ctx);
-        divider.setBackgroundColor(0xFFECEFF1);
+        divider.setBackgroundColor(Ui.divider(ctx));
         row.addView(divider, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
 
@@ -103,12 +103,12 @@ public class RecordsAdapter extends BaseAdapter {
         LinearLayout head = new LinearLayout(ctx);
         head.setOrientation(LinearLayout.VERTICAL);
         head.setPadding(Util.dp(ctx, 14), Util.dp(ctx, 8), Util.dp(ctx, 14), Util.dp(ctx, 6));
-        head.setBackgroundColor(0xFFE3F2FD);
+        head.setBackgroundColor(Ui.headerBg(ctx));
 
         TextView title = new TextView(ctx);
         title.setText(h.title);
         title.setTextSize(14);
-        title.setTextColor(0xFF1565C0);
+        title.setTextColor(Ui.headerText(ctx));
         title.setTypeface(title.getTypeface(), android.graphics.Typeface.BOLD);
         head.addView(title);
 
@@ -116,12 +116,12 @@ public class RecordsAdapter extends BaseAdapter {
             TextView totals = new TextView(ctx);
             totals.setText(h.totals);
             totals.setTextSize(12);
-            totals.setTextColor(0xFF546E7A);
+            totals.setTextColor(Ui.gray(ctx));
             head.addView(totals);
         }
 
         View div = new View(ctx);
-        div.setBackgroundColor(0xFFBBDEFB);
+        div.setBackgroundColor(Ui.headerDiv(ctx));
         head.addView(div, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
         return head;

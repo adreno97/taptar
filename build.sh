@@ -9,11 +9,14 @@ JAVAC="/home/adreno/Загрузки/gigaide/GigaIDE/jbr/bin/javac"
 KEYTOOL=/usr/lib/jvm/java-23-openjdk-amd64/bin/keytool
 cd "$PRJ"
 
-rm -rf build/obj build/dex build/stage build/app.unsigned.apk build/app.aligned.apk build/Таптар.apk
-mkdir -p build/obj build/dex build/stage
+rm -rf build/gen build/obj build/dex build/stage build/app.unsigned.apk build/app.aligned.apk build/Таптар.apk
+mkdir -p build/gen build/obj build/dex build/stage
+
+echo "== aapt R.java =="
+"$BT/aapt" package -f -m -J build/gen -M AndroidManifest.xml -S res -I "$PLAT"
 
 echo "== javac =="
-"$JAVAC" --release 8 -classpath "$PLAT" -d build/obj $(find src -name '*.java')
+"$JAVAC" --release 8 -classpath "$PLAT:build/gen" -d build/obj $(find src -name '*.java')
 echo "ok"
 
 echo "== d8 =="

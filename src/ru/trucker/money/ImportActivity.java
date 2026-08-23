@@ -27,6 +27,7 @@ public class ImportActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
         setTitle("Импорт рейсов из Excel");
@@ -35,20 +36,20 @@ public class ImportActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(Util.dp(this, 16), Util.dp(this, 16), Util.dp(this, 16), Util.dp(this, 24));
-        root.setBackgroundColor(0xFFF0F2F5);
+        root.setBackgroundColor(Ui.bg(this));
         sv.addView(root);
 
         TextView hint = new TextView(this);
         hint.setText("Выберите файл .xlsx от логиста. Приложение прочитает колонки «Номер СЛ», «Дата погрузки», «Маршрут» (зона), «Рейс» (ставка), «Доп.магазин», «Возврат» и «Сумма всего с НДС». Рейсы с уже существующим номером будут пропущены.");
         hint.setTextSize(13);
-        hint.setTextColor(0xFF607D8B);
+        hint.setTextColor(Ui.label(this));
         root.addView(hint);
 
         Button pick = new Button(this);
         pick.setText("Выбрать файл .xlsx");
         pick.setTextSize(16);
-        pick.setTextColor(0xFFFFFFFF);
-        pick.setBackgroundColor(0xFF1565C0);
+        pick.setTextColor(Ui.buttonText(this));
+        pick.setBackgroundColor(Ui.accent(this));
         LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 50));
         pp.topMargin = Util.dp(this, 12);
@@ -65,7 +66,7 @@ public class ImportActivity extends Activity {
         status = new TextView(this);
         status.setText("Файл ещё не выбран.");
         status.setTextSize(14);
-        status.setTextColor(0xFF37474F);
+        status.setTextColor(Ui.title(this));
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         sp.topMargin = Util.dp(this, 14);
@@ -74,8 +75,8 @@ public class ImportActivity extends Activity {
         importBtn = new Button(this);
         importBtn.setText("Импортировать");
         importBtn.setTextSize(16);
-        importBtn.setTextColor(0xFFFFFFFF);
-        importBtn.setBackgroundColor(0xFF2E7D32);
+        importBtn.setTextColor(Ui.buttonText(this));
+        importBtn.setBackgroundColor(Ui.income(this));
         importBtn.setEnabled(false);
         LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 50));
