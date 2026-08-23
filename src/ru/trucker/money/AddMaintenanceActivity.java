@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 
-public class AddMaintenanceActivity extends Activity {
+public class AddMaintenanceActivity extends BaseActivity {
 
     private DbHelper db;
     private long editId = -1;
@@ -26,7 +26,6 @@ public class AddMaintenanceActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
         editId = getIntent().getLongExtra("edit_id", -1);

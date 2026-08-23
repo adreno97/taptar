@@ -11,12 +11,11 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class HistoryActivity extends Activity {
+public class HistoryActivity extends BaseActivity {
 
     private DbHelper db;
     private boolean allTime = false;
@@ -27,7 +26,6 @@ public class HistoryActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
 
@@ -70,7 +68,14 @@ public class HistoryActivity extends Activity {
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
-                if (pos >= 0 && pos < data.size()) showRecordActions(data.get(pos));
+                if (pos >= 0 && pos < data.size()) {
+                    DbHelper.Record r = data.get(pos);
+                    Intent i = new Intent(HistoryActivity.this, AddActivity.class);
+                    i.putExtra("mode", r.income ? "income" : "expense");
+                    i.putExtra("edit_id", r.id);
+                    i.putExtra("edit_income", r.income);
+                    startActivity(i);
+                }
             }
         });
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -90,41 +95,6 @@ public class HistoryActivity extends Activity {
                 return true;
             }
         });
-    }
-
-    private void showRecordActions(final DbHelper.Record r) {
-        String title = r.income ? "Рейс " + r.number : r.category;
-        new AlertDialog.Builder(HistoryActivity.this)
-                .setTitle(title)
-                .setMessage(Util.date(r.date) + " · " + Util.rub(r.amount))
-                .setItems(new String[]{"Редактировать", "Дублировать"}, new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface d, int which) {
-                        if (which == 0) {
-                            Intent i = new Intent(HistoryActivity.this, AddActivity.class);
-                            i.putExtra("mode", r.income ? "income" : "expense");
-                            i.putExtra("edit_id", r.id);
-                            i.putExtra("edit_income", r.income);
-                            startActivity(i);
-                        } else {
-                            if (!r.income) {
-                                db.addExpense(r.date, r.category, r.amount, r.note, r.liters, r.pricePerLiter, r.mileage, r.discount);
-                            } else {
-                                String base = r.number;
-                                String num = base;
-                                int n = 2;
-                                while (db.hasTripNumber(num)) {
-                                    num = base + " (" + n + ")";
-                                    n++;
-                                }
-                                db.addTrip(num, r.date, r.zone, r.isReturn, r.basePrice, r.numPoints, r.amount, r.note);
-                            }
-                            Toast.makeText(HistoryActivity.this, "Запись продублирована", Toast.LENGTH_SHORT).show();
-                            reload();
-                        }
-                    }
-                })
-                .setNegativeButton("Отмена", null)
-                .show();
     }
 
     private void reload() {

@@ -16,7 +16,7 @@ import android.widget.TextView;
 import java.util.Calendar;
 import java.util.Map;
 
-public class StatsActivity extends Activity {
+public class StatsActivity extends BaseActivity {
 
     private static final int PER_CUR = 0, PER_PREV = 1, PER_MONTH = 2, PER_RANGE = 3, PER_ALL = 4;
 
@@ -28,7 +28,6 @@ public class StatsActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
 

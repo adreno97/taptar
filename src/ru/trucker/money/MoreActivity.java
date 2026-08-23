@@ -12,13 +12,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MoreActivity extends Activity {
+public class MoreActivity extends BaseActivity {
 
     private DbHelper db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
         setTitle("Ещё");

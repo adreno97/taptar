@@ -18,7 +18,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends BaseActivity {
 
     private LinearLayout zonesBox;
     private Spinner countSpinner;
@@ -34,7 +34,6 @@ public class SettingsActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         setTitle("Настройки зон");
 

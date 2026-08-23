@@ -22,7 +22,7 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 
-public class AddActivity extends Activity {
+public class AddActivity extends BaseActivity {
 
     private DbHelper db;
     private boolean income;
@@ -38,13 +38,13 @@ public class AddActivity extends Activity {
     private LinearLayout fuelBox, discountRow;
     private EditText litersEt, pricePerLiterEt, fuelMileageEt, discountEt;
     private TextView fuelHint;
-    private boolean loading, manualAmount, autoFilling;
+    private Button save, unlockBtn, del;
+    private boolean loading, manualAmount, autoFilling, locked;
     private String lastAuto;
     private String initialState = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
         income = "income".equals(getIntent().getStringExtra("mode"));
@@ -173,7 +173,7 @@ public class AddActivity extends Activity {
 
             catSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
                 @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
-                    manualAmount = false;
+                    if (editId < 0) manualAmount = false;
                     toggleFuel();
                 }
                 @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
@@ -191,7 +191,22 @@ public class AddActivity extends Activity {
 
         noteEt = addField(root, "Заметка (необязательно)", true);
 
-        Button save = new Button(this);
+        if (editId >= 0) {
+            unlockBtn = new Button(this);
+            unlockBtn.setText("✏ Внести изменения");
+            unlockBtn.setTextSize(16);
+            unlockBtn.setTextColor(Ui.buttonText(this));
+            unlockBtn.setBackgroundColor(Ui.accent(this));
+            LinearLayout.LayoutParams ulp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 52));
+            ulp.topMargin = Util.dp(this, 16);
+            root.addView(unlockBtn, ulp);
+            unlockBtn.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) { applyLocked(false); }
+            });
+        }
+
+        save = new Button(this);
         save.setText(editId >= 0 ? "Сохранить изменения" : "Добавить запись");
         save.setTextSize(16);
         save.setTextColor(Ui.buttonText(this));
@@ -205,7 +220,7 @@ public class AddActivity extends Activity {
         });
 
         if (editId >= 0) {
-            Button del = new Button(this);
+            del = new Button(this);
             del.setText("Удалить запись");
             del.setTextColor(Ui.expense(this));
             del.setBackgroundColor(Ui.dangerBg(this));
@@ -213,11 +228,21 @@ public class AddActivity extends Activity {
                     LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 44));
             dlp.topMargin = Util.dp(this, 8);
             root.addView(del, dlp);
+            del.setVisibility(View.GONE);
             del.setOnClickListener(new View.OnClickListener() {
                 @Override public void onClick(View v) {
-                    db.deleteRecord(editId, income);
-                    Toast.makeText(AddActivity.this, "Запись удалена", Toast.LENGTH_SHORT).show();
-                    finish();
+                    new AlertDialog.Builder(AddActivity.this)
+                            .setTitle("Удалить запись?")
+                            .setMessage("Запись будет удалена без возможности восстановления.")
+                            .setPositiveButton("Удалить", new DialogInterface.OnClickListener() {
+                                @Override public void onClick(DialogInterface d, int w) {
+                                    db.deleteRecord(editId, income);
+                                    Toast.makeText(AddActivity.this, "Запись удалена", Toast.LENGTH_SHORT).show();
+                                    finish();
+                                }
+                            })
+                            .setNegativeButton("Отмена", null)
+                            .show();
                 }
             });
         }
@@ -283,6 +308,7 @@ public class AddActivity extends Activity {
                 noteEt.setText(r.note);
             }
         }
+        if (editId >= 0) applyLocked(true);
         if (income) updatePreview();
         initialState = state();
         if (!income && editId < 0 && isFuel()) {
@@ -315,6 +341,38 @@ public class AddActivity extends Activity {
                 return false;
             }
         });
+    }
+
+    private void applyLocked(boolean on) {
+        int fieldBg = on ? Ui.fieldLocked(this) : Ui.field(this);
+        int cardBg = on ? Ui.cardLocked(this) : Ui.card(this);
+        int muted = on ? Ui.textLocked(this) : Ui.primary(this);
+
+        dateBtn.setEnabled(!on);
+        dateBtn.setBackgroundColor(on ? cardBg : Ui.card(this));
+        dateBtn.setTextColor(on ? muted : Ui.accentText(this));
+
+        if (income) {
+            numberEt.setEnabled(!on); numberEt.setBackgroundColor(fieldBg);
+            zoneSpinner.setEnabled(!on); zoneSpinner.setBackgroundColor(fieldBg);
+            returnCb.setEnabled(!on); returnCb.setTextColor(on ? muted : Ui.primary(this));
+            extraEt.setEnabled(!on); extraEt.setBackgroundColor(fieldBg);
+        } else {
+            catSpinner.setEnabled(!on); catSpinner.setBackgroundColor(fieldBg);
+            litersEt.setEnabled(!on); litersEt.setBackgroundColor(fieldBg);
+            pricePerLiterEt.setEnabled(!on); pricePerLiterEt.setBackgroundColor(fieldBg);
+            fuelMileageEt.setEnabled(!on); fuelMileageEt.setBackgroundColor(fieldBg);
+            discountEt.setEnabled(!on); discountEt.setBackgroundColor(fieldBg);
+            amountEt.setEnabled(!on); amountEt.setBackgroundColor(fieldBg);
+        }
+        noteEt.setEnabled(!on); noteEt.setBackgroundColor(fieldBg);
+
+        save.setEnabled(!on);
+        save.setBackgroundColor(on ? Ui.fieldLocked(this) : (income ? Ui.income(this) : Ui.expense(this)));
+        save.setTextColor(on ? Ui.textLocked(this) : Ui.buttonText(this));
+        if (unlockBtn != null) unlockBtn.setVisibility(on ? View.VISIBLE : View.GONE);
+        if (del != null) del.setVisibility(on ? View.GONE : View.VISIBLE);
+        locked = on;
     }
 
     private String state() {

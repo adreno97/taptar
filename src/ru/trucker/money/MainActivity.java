@@ -12,12 +12,11 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity {
+public class MainActivity extends BaseActivity {
 
     private DbHelper db;
     private TextView incomeTv, expenseTv, profitTv, periodTv;
@@ -27,7 +26,6 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
 
@@ -135,24 +133,9 @@ public class MainActivity extends Activity {
             @Override public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
                 Object item = adapter.getItem(pos);
                 if (!(item instanceof DbHelper.Record)) return;
-                showRecordActions((DbHelper.Record) item);
+                openEdit((DbHelper.Record) item);
             }
         });
-    }
-
-    private void showRecordActions(final DbHelper.Record r) {
-        String title = r.income ? "Рейс " + r.number : r.category;
-        new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setMessage(Util.date(r.date) + " · " + Util.rub(r.amount))
-                .setItems(new String[]{"Редактировать", "Дублировать"}, new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface d, int which) {
-                        if (which == 0) openEdit(r);
-                        else duplicate(r);
-                    }
-                })
-                .setNegativeButton("Отмена", null)
-                .show();
     }
 
     private void openEdit(DbHelper.Record r) {
@@ -180,23 +163,6 @@ public class MainActivity extends Activity {
                 })
                 .setNegativeButton("Отмена", null)
                 .show();
-    }
-
-    private void duplicate(DbHelper.Record r) {
-        if (!r.income) {
-            db.addExpense(r.date, r.category, r.amount, r.note, r.liters, r.pricePerLiter, r.mileage, r.discount);
-        } else {
-            String base = r.number;
-            String num = base;
-            int n = 2;
-            while (db.hasTripNumber(num)) {
-                num = base + " (" + n + ")";
-                n++;
-            }
-            db.addTrip(num, r.date, r.zone, r.isReturn, r.basePrice, r.numPoints, r.amount, r.note);
-        }
-        Toast.makeText(this, "Запись продублирована", Toast.LENGTH_SHORT).show();
-        refresh();
     }
 
     @Override

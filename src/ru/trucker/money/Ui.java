@@ -19,6 +19,11 @@ public class Ui {
     public static int headerDiv(Context c) { return dark(c) ? 0xFF37474F : 0xFFBBDEFB; }
     public static int dangerBg(Context c) { return dark(c) ? 0xFF3A2024 : 0xFFFFEBEE; }
 
+    // Режим просмотра (заблокированное редактирование)
+    public static int fieldLocked(Context c) { return dark(c) ? 0xFF1A1721 : 0xFFECEFF1; }
+    public static int cardLocked(Context c) { return dark(c) ? 0xFF1A1721 : 0xFFF5F5F5; }
+    public static int textLocked(Context c) { return dark(c) ? 0xFF7A7682 : 0xFF9E9E9E; }
+
     // Текст
     public static int title(Context c) { return dark(c) ? 0xFFECEFF1 : 0xFF37474F; }
     public static int primary(Context c) { return dark(c) ? 0xFFECEFF1 : 0xFF263238; }

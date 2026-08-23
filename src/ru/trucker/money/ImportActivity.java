@@ -16,7 +16,7 @@ import android.widget.Toast;
 import java.io.InputStream;
 import java.util.List;
 
-public class ImportActivity extends Activity {
+public class ImportActivity extends BaseActivity {
 
     private static final int REQ_PICK = 100;
 
@@ -27,7 +27,6 @@ public class ImportActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
         setTitle("Импорт рейсов из Excel");

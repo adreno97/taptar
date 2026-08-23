@@ -21,7 +21,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MaintenanceActivity extends Activity {
+public class MaintenanceActivity extends BaseActivity {
 
     private DbHelper db;
     private ListView listView;
@@ -30,7 +30,6 @@ public class MaintenanceActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (Ui.dark(this)) setTheme(android.R.style.Theme_Material);
         super.onCreate(savedInstanceState);
         db = new DbHelper(this);
 
