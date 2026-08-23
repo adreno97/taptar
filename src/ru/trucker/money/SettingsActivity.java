@@ -61,7 +61,7 @@ public class SettingsActivity extends BaseActivity {
         String[] opts = new String[Zones.MAX - Zones.MIN + 1];
         for (int i = 0; i < opts.length; i++) opts[i] = (i + Zones.MIN) + " зоны";
         countSpinner.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, opts));
-        countSpinner.setBackgroundColor(Ui.field(this));
+        countSpinner.setBackground(Ui.round(this, Ui.field(this), 8));
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 48));
         root.addView(countSpinner, sp);
@@ -105,7 +105,7 @@ public class SettingsActivity extends BaseActivity {
         nextToBtn.setText("Дата следующего ТО: не задана");
         nextToBtn.setTextSize(13);
         nextToBtn.setTextColor(Ui.accentText(this));
-        nextToBtn.setBackgroundColor(Ui.card(this));
+        nextToBtn.setBackground(Ui.round(this, Ui.card(this), 8));
         root.addView(nextToBtn, lpWrap());
         nextToBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { pickNextDate(); }
@@ -139,7 +139,7 @@ public class SettingsActivity extends BaseActivity {
         save.setText("Сохранить");
         save.setTextSize(16);
         save.setTextColor(Ui.buttonText(this));
-        save.setBackgroundColor(Ui.accent(this));
+        save.setBackground(Ui.round(this, Ui.accent(this), 8));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 52));
         slp.topMargin = Util.dp(this, 16);
@@ -213,7 +213,7 @@ public class SettingsActivity extends BaseActivity {
             price.setTextSize(15);
             price.setText(String.valueOf(current[i] / 100.0).replace(".0", ""));
             price.setSingleLine(true);
-            price.setBackgroundColor(Ui.field(this));
+            price.setBackground(Ui.round(this, Ui.field(this), 8));
             price.setPadding(Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8));
             LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
             row.addView(price, pp);
@@ -244,7 +244,7 @@ public class SettingsActivity extends BaseActivity {
         ed.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
         ed.setTextSize(15);
         ed.setSingleLine(true);
-        ed.setBackgroundColor(Ui.field(this));
+        ed.setBackground(Ui.round(this, Ui.field(this), 8));
         ed.setPadding(Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8));
         LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         row.addView(ed, pp);

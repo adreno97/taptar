@@ -67,7 +67,7 @@ public class AddActivity extends BaseActivity {
         dateBtn.setAllCaps(false);
         dateBtn.setText("Дата: " + Util.date(date));
         dateBtn.setTextColor(Ui.accentText(this));
-        dateBtn.setBackgroundColor(Ui.card(this));
+        dateBtn.setBackground(Ui.round(this, Ui.card(this), 8));
         root.addView(dateBtn, lpWrap());
         dateBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { pickDate(); }
@@ -80,7 +80,7 @@ public class AddActivity extends BaseActivity {
                     android.R.layout.simple_spinner_item, zoneNames());
             za.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             zoneSpinner.setAdapter(za);
-            zoneSpinner.setBackgroundColor(Ui.field(this));
+            zoneSpinner.setBackground(Ui.round(this, Ui.field(this), 8));
             root.addView(zoneSpinner, spinnerLp());
 
             returnCb = new CheckBox(this);
@@ -119,7 +119,7 @@ public class AddActivity extends BaseActivity {
                     android.R.layout.simple_spinner_item, DbHelper.CATEGORIES);
             a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             catSpinner.setAdapter(a);
-            catSpinner.setBackgroundColor(Ui.field(this));
+            catSpinner.setBackground(Ui.round(this, Ui.field(this), 8));
             root.addView(catSpinner, spinnerLp());
 
             fuelBox = new LinearLayout(this);
@@ -145,7 +145,7 @@ public class AddActivity extends BaseActivity {
             discountEt.setTextSize(15);
             discountEt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
             discountEt.setSingleLine(true);
-            discountEt.setBackgroundColor(Ui.field(this));
+            discountEt.setBackground(Ui.round(this, Ui.field(this), 8));
             discountEt.setPadding(Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8));
             discountRow.addView(discountEt, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             discountRow.setVisibility(View.GONE);
@@ -196,7 +196,7 @@ public class AddActivity extends BaseActivity {
             unlockBtn.setText("✏ Внести изменения");
             unlockBtn.setTextSize(16);
             unlockBtn.setTextColor(Ui.buttonText(this));
-            unlockBtn.setBackgroundColor(Ui.accent(this));
+            unlockBtn.setBackground(Ui.round(this, Ui.accent(this), 8));
             LinearLayout.LayoutParams ulp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 52));
             ulp.topMargin = Util.dp(this, 16);
@@ -210,7 +210,7 @@ public class AddActivity extends BaseActivity {
         save.setText(editId >= 0 ? "Сохранить изменения" : "Добавить запись");
         save.setTextSize(16);
         save.setTextColor(Ui.buttonText(this));
-        save.setBackgroundColor(income ? Ui.income(this) : Ui.expense(this));
+        save.setBackground(Ui.round(this, income ? Ui.income(this) : Ui.expense(this), 8));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 52));
         slp.topMargin = Util.dp(this, 16);
@@ -223,7 +223,7 @@ public class AddActivity extends BaseActivity {
             del = new Button(this);
             del.setText("Удалить запись");
             del.setTextColor(Ui.expense(this));
-            del.setBackgroundColor(Ui.dangerBg(this));
+            del.setBackground(Ui.round(this, Ui.dangerBg(this), 8));
             LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 44));
             dlp.topMargin = Util.dp(this, 8);
@@ -254,12 +254,6 @@ public class AddActivity extends BaseActivity {
             if (presetCat != null) {
                 int idx = indexOf(presetCat);
                 catSpinner.setSelection(idx);
-            } else {
-                String lastCat = getSharedPreferences("app", 0).getString("last_cat", null);
-                if (lastCat != null) {
-                    int idx = indexOf(lastCat);
-                    catSpinner.setSelection(idx);
-                }
             }
             if (isFuel()) {
                 String p = getSharedPreferences("app", 0).getString("last_price", null);
@@ -349,26 +343,26 @@ public class AddActivity extends BaseActivity {
         int muted = on ? Ui.textLocked(this) : Ui.primary(this);
 
         dateBtn.setEnabled(!on);
-        dateBtn.setBackgroundColor(on ? cardBg : Ui.card(this));
+        dateBtn.setBackground(Ui.round(this, on ? cardBg : Ui.card(this), 8));
         dateBtn.setTextColor(on ? muted : Ui.accentText(this));
 
         if (income) {
-            numberEt.setEnabled(!on); numberEt.setBackgroundColor(fieldBg);
-            zoneSpinner.setEnabled(!on); zoneSpinner.setBackgroundColor(fieldBg);
+            numberEt.setEnabled(!on); numberEt.setBackground(Ui.round(this, fieldBg, 8));
+            zoneSpinner.setEnabled(!on); zoneSpinner.setBackground(Ui.round(this, fieldBg, 8));
             returnCb.setEnabled(!on); returnCb.setTextColor(on ? muted : Ui.primary(this));
-            extraEt.setEnabled(!on); extraEt.setBackgroundColor(fieldBg);
+            extraEt.setEnabled(!on); extraEt.setBackground(Ui.round(this, fieldBg, 8));
         } else {
-            catSpinner.setEnabled(!on); catSpinner.setBackgroundColor(fieldBg);
-            litersEt.setEnabled(!on); litersEt.setBackgroundColor(fieldBg);
-            pricePerLiterEt.setEnabled(!on); pricePerLiterEt.setBackgroundColor(fieldBg);
-            fuelMileageEt.setEnabled(!on); fuelMileageEt.setBackgroundColor(fieldBg);
-            discountEt.setEnabled(!on); discountEt.setBackgroundColor(fieldBg);
-            amountEt.setEnabled(!on); amountEt.setBackgroundColor(fieldBg);
+            catSpinner.setEnabled(!on); catSpinner.setBackground(Ui.round(this, fieldBg, 8));
+            litersEt.setEnabled(!on); litersEt.setBackground(Ui.round(this, fieldBg, 8));
+            pricePerLiterEt.setEnabled(!on); pricePerLiterEt.setBackground(Ui.round(this, fieldBg, 8));
+            fuelMileageEt.setEnabled(!on); fuelMileageEt.setBackground(Ui.round(this, fieldBg, 8));
+            discountEt.setEnabled(!on); discountEt.setBackground(Ui.round(this, fieldBg, 8));
+            amountEt.setEnabled(!on); amountEt.setBackground(Ui.round(this, fieldBg, 8));
         }
-        noteEt.setEnabled(!on); noteEt.setBackgroundColor(fieldBg);
+        noteEt.setEnabled(!on); noteEt.setBackground(Ui.round(this, fieldBg, 8));
 
         save.setEnabled(!on);
-        save.setBackgroundColor(on ? Ui.fieldLocked(this) : (income ? Ui.income(this) : Ui.expense(this)));
+        save.setBackground(Ui.round(this, on ? Ui.fieldLocked(this) : (income ? Ui.income(this) : Ui.expense(this)), 8));
         save.setTextColor(on ? Ui.textLocked(this) : Ui.buttonText(this));
         if (unlockBtn != null) unlockBtn.setVisibility(on ? View.VISIBLE : View.GONE);
         if (del != null) del.setVisibility(on ? View.GONE : View.VISIBLE);
@@ -461,7 +455,7 @@ public class AddActivity extends BaseActivity {
         et.setHint(hint);
         et.setTextSize(14);
         et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        et.setBackgroundColor(Ui.field(this));
+        et.setBackground(Ui.round(this, Ui.field(this), 8));
         et.setPadding(Util.dp(this, 8), Util.dp(this, 10), Util.dp(this, 8), Util.dp(this, 10));
         box.addView(et, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         return et;
@@ -537,7 +531,7 @@ public class AddActivity extends BaseActivity {
         if (!multi) {
             et.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         }
-        et.setBackgroundColor(Ui.field(this));
+        et.setBackground(Ui.round(this, Ui.field(this), 8));
         et.setPadding(Util.dp(this, 10), Util.dp(this, 12), Util.dp(this, 10), Util.dp(this, 12));
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -643,8 +637,7 @@ public class AddActivity extends BaseActivity {
             }
             String cat = DbHelper.CATEGORIES[catSpinner.getSelectedItemPosition()];
             String note = noteEt.getText().toString().trim();
-            android.content.SharedPreferences.Editor e = getSharedPreferences("app", 0).edit()
-                    .putString("last_cat", cat);
+            android.content.SharedPreferences.Editor e = getSharedPreferences("app", 0).edit();
             if (isFuel()) {
                 e.putString("last_price", Util.num(fuelPrice));
                 e.putString("last_discount", Util.num(fuelDisc));

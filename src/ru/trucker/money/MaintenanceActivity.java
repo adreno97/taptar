@@ -55,8 +55,11 @@ public class MaintenanceActivity extends BaseActivity {
         root.addView(btnRow);
 
         listView = new ListView(this);
-        listView.setDividerHeight(0);
-        listView.setBackgroundColor(Ui.card(this));
+        listView.setDivider(new android.graphics.drawable.ColorDrawable(Ui.bg(this)));
+        listView.setDividerHeight(Util.dp(this, 6));
+        listView.setBackgroundColor(Ui.bg(this));
+        listView.setPadding(Util.dp(this, 6), Util.dp(this, 4), Util.dp(this, 6), Util.dp(this, 4));
+        listView.setClipToPadding(false);
         root.addView(listView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);
@@ -109,7 +112,7 @@ public class MaintenanceActivity extends BaseActivity {
         Button b = new Button(this);
         b.setText(text);
         b.setTextColor(Ui.buttonText(this));
-        b.setBackgroundColor(color);
+        b.setBackground(Ui.round(MaintenanceActivity.this, color, 8));
         b.setTextSize(14);
         b.setLayoutParams(new LinearLayout.LayoutParams(0, Util.dp(this, 46), 1f));
         return b;
@@ -140,6 +143,7 @@ public class MaintenanceActivity extends BaseActivity {
                 row.setOrientation(LinearLayout.VERTICAL);
                 row.setPadding(Util.dp(MaintenanceActivity.this, 14), Util.dp(MaintenanceActivity.this, 10),
                         Util.dp(MaintenanceActivity.this, 14), Util.dp(MaintenanceActivity.this, 10));
+                row.setBackground(Ui.round(MaintenanceActivity.this, Ui.card(MaintenanceActivity.this), 10));
             } else {
                 row = (LinearLayout) convert;
                 row.removeAllViews();
@@ -163,10 +167,6 @@ public class MaintenanceActivity extends BaseActivity {
             works.setTextColor(Ui.gray(MaintenanceActivity.this));
             row.addView(works);
 
-            View div = new View(MaintenanceActivity.this);
-            div.setBackgroundColor(Ui.divider(MaintenanceActivity.this));
-            row.addView(div, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
             return row;
         }
     }

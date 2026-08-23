@@ -36,7 +36,7 @@ public class HistoryActivity extends BaseActivity {
         LinearLayout filters = new LinearLayout(this);
         filters.setOrientation(LinearLayout.HORIZONTAL);
         filters.setPadding(Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8));
-        filters.setBackgroundColor(Ui.card(this));
+        filters.setBackground(Ui.round(this, Ui.card(this), 10));
 
         final Spinner period = new Spinner(this);
         period.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,
@@ -50,7 +50,11 @@ public class HistoryActivity extends BaseActivity {
         root.addView(filters);
 
         listView = new ListView(this);
-        listView.setDividerHeight(0);
+        listView.setDivider(new android.graphics.drawable.ColorDrawable(Ui.bg(this)));
+        listView.setDividerHeight(Util.dp(this, 6));
+        listView.setBackgroundColor(Ui.bg(this));
+        listView.setPadding(Util.dp(this, 6), Util.dp(this, 4), Util.dp(this, 6), Util.dp(this, 4));
+        listView.setClipToPadding(false);
         root.addView(listView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
         setContentView(root);

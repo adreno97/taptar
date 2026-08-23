@@ -1,6 +1,7 @@
 package ru.trucker.money;
 
 import android.content.Context;
+import android.graphics.drawable.GradientDrawable;
 
 /** Цветовая палитра приложения: светлая / тёмная тема. */
 public class Ui {
@@ -9,6 +10,14 @@ public class Ui {
 
     public static boolean dark(Context c) {
         return c.getSharedPreferences("app", 0).getBoolean("dark_theme", false);
+    }
+
+    /** Скруглённый фон заданного цвета. */
+    public static GradientDrawable round(Context c, int color, int radiusDp) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(color);
+        g.setCornerRadius(Util.dp(c, radiusDp));
+        return g;
     }
 
     // Фоны

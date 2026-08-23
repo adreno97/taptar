@@ -43,7 +43,7 @@ public class AddMaintenanceActivity extends BaseActivity {
         dateBtn.setAllCaps(false);
         dateBtn.setText("Дата: " + Util.date(date));
         dateBtn.setTextColor(Ui.accentText(this));
-        dateBtn.setBackgroundColor(Ui.card(this));
+        dateBtn.setBackground(Ui.round(this, Ui.card(this), 8));
         LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         dp.topMargin = Util.dp(this, 8);
@@ -56,7 +56,7 @@ public class AddMaintenanceActivity extends BaseActivity {
         mileageEt.setHint("Пробег, км");
         mileageEt.setInputType(InputType.TYPE_CLASS_NUMBER);
         mileageEt.setTextSize(16);
-        mileageEt.setBackgroundColor(Ui.field(this));
+        mileageEt.setBackground(Ui.round(this, Ui.field(this), 8));
         mileageEt.setPadding(Util.dp(this, 10), Util.dp(this, 12), Util.dp(this, 10), Util.dp(this, 12));
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -69,7 +69,7 @@ public class AddMaintenanceActivity extends BaseActivity {
         worksEt.setGravity(android.view.Gravity.TOP);
         worksEt.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         worksEt.setMinLines(4);
-        worksEt.setBackgroundColor(Ui.field(this));
+        worksEt.setBackground(Ui.round(this, Ui.field(this), 8));
         worksEt.setPadding(Util.dp(this, 10), Util.dp(this, 12), Util.dp(this, 10), Util.dp(this, 12));
         LinearLayout.LayoutParams wp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -80,7 +80,7 @@ public class AddMaintenanceActivity extends BaseActivity {
         save.setText(editId >= 0 ? "Сохранить изменения" : "Добавить запись");
         save.setTextSize(16);
         save.setTextColor(Ui.buttonText(this));
-        save.setBackgroundColor(Ui.accent(this));
+        save.setBackground(Ui.round(this, Ui.accent(this), 8));
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 52));
         slp.topMargin = Util.dp(this, 16);
@@ -93,7 +93,7 @@ public class AddMaintenanceActivity extends BaseActivity {
             Button del = new Button(this);
             del.setText("Удалить запись");
             del.setTextColor(Ui.expense(this));
-            del.setBackgroundColor(Ui.dangerBg(this));
+            del.setBackground(Ui.round(this, Ui.dangerBg(this), 8));
             LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 44));
             dlp.topMargin = Util.dp(this, 8);

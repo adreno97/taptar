@@ -1,8 +1,6 @@
 package ru.trucker.money;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -52,31 +50,27 @@ public class MainActivity extends BaseActivity {
 
         LinearLayout btnRow = new LinearLayout(this);
         btnRow.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow.setPadding(0, Util.dp(this, 12), 0, 0);
+        btnRow.setPadding(0, Util.dp(this, 14), 0, 0);
         Button addIncome = btn("🚚 Рейс", Ui.income(this));
-        Button addFuel = btn("⛽ Заправка", Ui.accent(this));
         Button addExpense = btn("+ Расход", Ui.expense(this));
         btnRow.addView(addIncome);
-        btnRow.addView(addFuel);
         btnRow.addView(addExpense);
         root.addView(btnRow);
 
         LinearLayout btnRow2 = new LinearLayout(this);
         btnRow2.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow2.setPadding(0, Util.dp(this, 8), 0, 0);
-        Button history = btn("История", Ui.navBtn(this));
+        btnRow2.setPadding(0, Util.dp(this, 10), 0, 0);
         Button stats = btn("Статистика", Ui.navBtn(this));
-        btnRow2.addView(history);
+        Button more = btn("⚙ Ещё", Ui.brown(this));
         btnRow2.addView(stats);
+        btnRow2.addView(more);
         root.addView(btnRow2);
 
         LinearLayout btnRow3 = new LinearLayout(this);
         btnRow3.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow3.setPadding(0, Util.dp(this, 8), 0, 0);
+        btnRow3.setPadding(0, Util.dp(this, 10), 0, 0);
         Button maint = btn("🚗 Обслуживание ТС", Ui.navBtn(this));
-        Button more = btn("⚙ Ещё", Ui.brown(this));
         btnRow3.addView(maint);
-        btnRow3.addView(more);
         root.addView(btnRow3);
 
         TextView recentTv = new TextView(this);
@@ -88,8 +82,11 @@ public class MainActivity extends BaseActivity {
         root.addView(recentTv);
 
         listView = new ListView(this);
-        listView.setDividerHeight(0);
-        listView.setBackgroundColor(Ui.card(this));
+        listView.setDivider(new android.graphics.drawable.ColorDrawable(Ui.bg(this)));
+        listView.setDividerHeight(Util.dp(this, 6));
+        listView.setBackgroundColor(Ui.bg(this));
+        listView.setPadding(Util.dp(this, 6), Util.dp(this, 4), Util.dp(this, 6), Util.dp(this, 4));
+        listView.setClipToPadding(false);
         root.addView(listView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
 
@@ -110,14 +107,8 @@ public class MainActivity extends BaseActivity {
                 startActivity(i);
             }
         });
-        addFuel.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { openExpense("Заправка"); }
-        });
         addExpense.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { showCategoryDialog(); }
-        });
-        history.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, HistoryActivity.class)); }
+            @Override public void onClick(View v) { openExpense("Заправка"); }
         });
         stats.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { startActivity(new Intent(MainActivity.this, StatsActivity.class)); }
@@ -151,18 +142,6 @@ public class MainActivity extends BaseActivity {
         i.putExtra("mode", "expense");
         i.putExtra("category", cat);
         startActivity(i);
-    }
-
-    private void showCategoryDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Новый расход — категория")
-                .setItems(DbHelper.CATEGORIES, new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface d, int which) {
-                        openExpense(DbHelper.CATEGORIES[which]);
-                    }
-                })
-                .setNegativeButton("Отмена", null)
-                .show();
     }
 
     @Override
@@ -273,7 +252,7 @@ public class MainActivity extends BaseActivity {
     private LinearLayout card() {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackgroundColor(Ui.card(this));
+        card.setBackground(Ui.round(this, Ui.card(this), 12));
         card.setPadding(Util.dp(this, 14), Util.dp(this, 12), Util.dp(this, 14), Util.dp(this, 12));
         card.setElevation(Util.dp(this, 2));
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
@@ -310,9 +289,12 @@ public class MainActivity extends BaseActivity {
         Button b = new Button(this);
         b.setText(text);
         b.setTextColor(Ui.buttonText(this));
-        b.setBackgroundColor(color);
+        b.setBackground(Ui.round(this, color, 8));
         b.setTextSize(14);
-        b.setLayoutParams(new LinearLayout.LayoutParams(0, Util.dp(this, 48), 1f));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, Util.dp(this, 48), 1f);
+        lp.leftMargin = Util.dp(this, 4);
+        lp.rightMargin = Util.dp(this, 4);
+        b.setLayoutParams(lp);
         return b;
     }
 }

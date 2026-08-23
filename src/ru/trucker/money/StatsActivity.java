@@ -38,7 +38,7 @@ public class StatsActivity extends BaseActivity {
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setPadding(Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8), Util.dp(this, 8));
-        top.setBackgroundColor(Ui.card(this));
+        top.setBackground(Ui.round(this, Ui.card(this), 10));
         Spinner period = new Spinner(this);
         period.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,
                 new String[]{"Текущий месяц", "Прошлый месяц", "Выбрать месяц…", "Произвольный период", "Всё время"}));
@@ -47,7 +47,7 @@ public class StatsActivity extends BaseActivity {
 
         rangeRow = new LinearLayout(this);
         rangeRow.setOrientation(LinearLayout.HORIZONTAL);
-        rangeRow.setBackgroundColor(Ui.card(this));
+        rangeRow.setBackground(Ui.round(this, Ui.card(this), 10));
         fromBtn = rangeBtn("От");
         toBtn = rangeBtn("До");
         rangeRow.addView(fromBtn, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
@@ -85,7 +85,7 @@ public class StatsActivity extends BaseActivity {
         b.setAllCaps(false);
         b.setTextSize(13);
         b.setTextColor(Ui.accentText(this));
-        b.setBackgroundColor(Ui.bg(this));
+        b.setBackground(Ui.round(this, Ui.bg(this), 8));
         return b;
     }
 
@@ -319,11 +319,11 @@ public class StatsActivity extends BaseActivity {
             body.addView(bar, bp);
 
             View fill = new View(this);
-            fill.setBackgroundColor(Ui.barFill(this));
+            fill.setBackground(Ui.round(this, Ui.barFill(this), 4));
             bar.addView(fill, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,
                     frac > 0 ? frac : 0.001f));
             View rest = new View(this);
-            rest.setBackgroundColor(Ui.barRest(this));
+            rest.setBackground(Ui.round(this, Ui.barRest(this), 4));
             bar.addView(rest, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT,
                     frac > 0 ? 1f - frac : 0.999f));
         }

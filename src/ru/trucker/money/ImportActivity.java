@@ -48,7 +48,7 @@ public class ImportActivity extends BaseActivity {
         pick.setText("Выбрать файл .xlsx");
         pick.setTextSize(16);
         pick.setTextColor(Ui.buttonText(this));
-        pick.setBackgroundColor(Ui.accent(this));
+        pick.setBackground(Ui.round(this, Ui.accent(this), 8));
         LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 50));
         pp.topMargin = Util.dp(this, 12);
@@ -75,7 +75,7 @@ public class ImportActivity extends BaseActivity {
         importBtn.setText("Импортировать");
         importBtn.setTextSize(16);
         importBtn.setTextColor(Ui.buttonText(this));
-        importBtn.setBackgroundColor(Ui.income(this));
+        importBtn.setBackground(Ui.round(this, Ui.income(this), 8));
         importBtn.setEnabled(false);
         LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Util.dp(this, 50));

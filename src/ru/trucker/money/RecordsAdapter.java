@@ -47,6 +47,7 @@ public class RecordsAdapter extends BaseAdapter {
             row = new LinearLayout(ctx);
             row.setOrientation(LinearLayout.VERTICAL);
             row.setPadding(Util.dp(ctx, 14), Util.dp(ctx, 10), Util.dp(ctx, 14), Util.dp(ctx, 10));
+            row.setBackground(Ui.round(ctx, Ui.card(ctx), 10));
             row.setTag(Boolean.TRUE);
         } else {
             row = (LinearLayout) convert;
@@ -91,19 +92,14 @@ public class RecordsAdapter extends BaseAdapter {
         subTv.setTextColor(Ui.sub(ctx));
         row.addView(subTv);
 
-        View divider = new View(ctx);
-        divider.setBackgroundColor(Ui.divider(ctx));
-        row.addView(divider, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
-
         return row;
     }
 
     private View headerView(Header h) {
         LinearLayout head = new LinearLayout(ctx);
         head.setOrientation(LinearLayout.VERTICAL);
-        head.setPadding(Util.dp(ctx, 14), Util.dp(ctx, 8), Util.dp(ctx, 14), Util.dp(ctx, 6));
-        head.setBackgroundColor(Ui.headerBg(ctx));
+        head.setPadding(Util.dp(ctx, 14), Util.dp(ctx, 8), Util.dp(ctx, 14), Util.dp(ctx, 8));
+        head.setBackground(Ui.round(ctx, Ui.headerBg(ctx), 10));
 
         TextView title = new TextView(ctx);
         title.setText(h.title);
@@ -120,10 +116,6 @@ public class RecordsAdapter extends BaseAdapter {
             head.addView(totals);
         }
 
-        View div = new View(ctx);
-        div.setBackgroundColor(Ui.headerDiv(ctx));
-        head.addView(div, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 1, 0));
         return head;
     }
 }

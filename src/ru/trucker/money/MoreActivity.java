@@ -29,6 +29,11 @@ public class MoreActivity extends BaseActivity {
         root.setBackgroundColor(Ui.bg(this));
         sv.addView(root);
 
+        row(root, "📜 История", "Все рейсы и расходы, поиск по периодам", new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                startActivity(new Intent(MoreActivity.this, HistoryActivity.class));
+            }
+        });
         row(root, "📥 Импорт Excel", "Загрузить рейсы из таблицы логиста (.xls / .xlsx)", new View.OnClickListener() {
             @Override public void onClick(View v) {
                 startActivity(new Intent(MoreActivity.this, ImportActivity.class));
@@ -75,7 +80,7 @@ public class MoreActivity extends BaseActivity {
 
     private void row(LinearLayout root, String title, String desc, View.OnClickListener onClick) {
         Button b = new Button(this);
-        b.setBackgroundColor(Ui.card(this));
+        b.setBackground(Ui.round(this, Ui.card(this), 10));
         b.setAllCaps(false);
         b.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
         b.setTextColor(Ui.primary(this));
