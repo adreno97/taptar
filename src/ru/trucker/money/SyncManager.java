@@ -73,7 +73,7 @@ public class SyncManager {
                     ok = true;
                     msg = "Синхронизировано " + lastSyncText(app);
                 } catch (Exception e) {
-                    msg = "Ошибка синхронизации: " + e.getMessage();
+                    msg = "Ошибка синхронизации: " + e.getMessage() + " (bucket: " + BUCKET + ")";
                 }
                 post(a, cb, ok, msg);
             }
@@ -100,7 +100,7 @@ public class SyncManager {
                         msg = "Данные восстановлены " + lastSyncText(app);
                     }
                 } catch (Exception e) {
-                    msg = "Ошибка восстановления: " + e.getMessage();
+                    msg = "Ошибка восстановления: " + e.getMessage() + " (bucket: " + BUCKET + ")";
                 }
                 post(a, cb, ok, msg);
             }
