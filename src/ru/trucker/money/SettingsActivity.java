@@ -34,6 +34,8 @@ public class SettingsActivity extends BaseActivity {
     private EditText cloudEmailEt, cloudPassEt;
     private TextView cloudStatusTv;
     private Button syncBtn, restoreBtn;
+    private android.widget.Switch dailyBackupCb;
+    private Button dailyTimeBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -181,6 +183,21 @@ public class SettingsActivity extends BaseActivity {
         cloudRow.addView(restoreBtn, new LinearLayout.LayoutParams(0, Util.dp(this, 48), 1f));
         root.addView(cloudRow);
 
+        dailyBackupCb = new android.widget.Switch(this);
+        dailyBackupCb.setText("Ежедневный бэкап в облако");
+        dailyBackupCb.setTextSize(15);
+        root.addView(dailyBackupCb);
+
+        dailyTimeBtn = new Button(this);
+        dailyTimeBtn.setAllCaps(false);
+        dailyTimeBtn.setTextSize(13);
+        dailyTimeBtn.setTextColor(Ui.accentText(this));
+        dailyTimeBtn.setBackground(Ui.round(this, Ui.card(this), 8));
+        root.addView(dailyTimeBtn, lpWrap());
+        dailyTimeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { pickDailyTime(); }
+        });
+
         Button save = new Button(this);
         save.setText("Сохранить");
         save.setTextSize(16);
@@ -221,6 +238,9 @@ public class SettingsActivity extends BaseActivity {
         cloudPassEt.setText(SyncManager.password(this));
         updateCloudStatus();
 
+        dailyBackupCb.setChecked(DailyBackup.isEnabled(this));
+        dailyTimeBtn.setText("Время ежедневного бэкапа: " + DailyBackup.timeText(this));
+
         countSpinner.setSelection(Zones.getCount(this) - Zones.MIN);
         countSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
@@ -260,24 +280,88 @@ public class SettingsActivity extends BaseActivity {
                     Toast.makeText(SettingsActivity.this, "Укажите email и пароль аккаунта", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                new android.app.AlertDialog.Builder(SettingsActivity.this)
-                        .setTitle("Восстановить из облака")
-                        .setMessage("Все данные на устройстве будут заменены данными из облака. Продолжить?")
-                        .setPositiveButton("Восстановить", new android.content.DialogInterface.OnClickListener() {
-                            @Override public void onClick(android.content.DialogInterface d, int w) {
-                                SyncManager.restore(SettingsActivity.this, new SyncManager.Callback() {
-                                    @Override public void done(boolean ok, String msg) {
-                                        updateCloudStatus();
-                                        Toast.makeText(SettingsActivity.this, msg, Toast.LENGTH_LONG).show();
-                                        recreate();
-                                    }
-                                });
-                            }
-                        })
-                        .setNegativeButton("Отмена", null)
-                        .show();
+                SyncManager.listBackups(SettingsActivity.this, new SyncManager.ListCallback() {
+                    @Override public void done(boolean ok, String msg, String listJson) {
+                        if (!ok) {
+                            Toast.makeText(SettingsActivity.this, "Ошибка: " + msg, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        showRestorePicker(listJson);
+                    }
+                });
             }
         });
+
+        dailyBackupCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override public void onCheckedChanged(CompoundButton b, boolean checked) {
+                DailyBackup.setEnabled(SettingsActivity.this, checked);
+                if (checked) DailyBackup.schedule(SettingsActivity.this);
+                else DailyBackup.cancel(SettingsActivity.this);
+            }
+        });
+    }
+
+    private void pickDailyTime() {
+        android.app.TimePickerDialog d = new android.app.TimePickerDialog(this,
+                new android.app.TimePickerDialog.OnTimeSetListener() {
+                    @Override public void onTimeSet(android.widget.TimePicker v, int h, int m) {
+                        DailyBackup.setTime(SettingsActivity.this, h, m);
+                        dailyTimeBtn.setText("Время ежедневного бэкапа: " + DailyBackup.timeText(SettingsActivity.this));
+                        if (DailyBackup.isEnabled(SettingsActivity.this)) DailyBackup.schedule(SettingsActivity.this);
+                    }
+                },
+                DailyBackup.hour(this), DailyBackup.minute(this), true);
+        d.show();
+    }
+
+    private void showRestorePicker(String listJson) {
+        try {
+            org.json.JSONArray arr = new org.json.JSONArray(listJson);
+            final List<String> names = new ArrayList<>();
+            final List<String> labels = new ArrayList<>();
+            names.add(SyncManager.OBJECT);
+            labels.add("Последняя (текущая)");
+            for (int i = 0; i < arr.length(); i++) {
+                org.json.JSONObject o = arr.getJSONObject(i);
+                names.add(o.optString("name"));
+                labels.add(o.optString("label"));
+            }
+            if (names.size() == 1) {
+                Toast.makeText(this, "В облаке пока нет копий с датой", Toast.LENGTH_LONG).show();
+                return;
+            }
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Восстановить из облака")
+                    .setSingleChoiceItems(labels.toArray(new String[0]), 0, new android.content.DialogInterface.OnClickListener() {
+                        @Override public void onClick(android.content.DialogInterface d, int which) {
+                            d.dismiss();
+                            confirmRestore(names.get(which));
+                        }
+                    })
+                    .setNegativeButton("Отмена", null)
+                    .show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка загрузки списка копий", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void confirmRestore(final String objectName) {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Восстановить")
+                .setMessage("Все данные на устройстве будут заменены выбранной копией. Продолжить?")
+                .setPositiveButton("Восстановить", new android.content.DialogInterface.OnClickListener() {
+                    @Override public void onClick(android.content.DialogInterface d, int w) {
+                        SyncManager.restoreObject(SettingsActivity.this, objectName, new SyncManager.Callback() {
+                            @Override public void done(boolean ok, String msg) {
+                                updateCloudStatus();
+                                Toast.makeText(SettingsActivity.this, msg, Toast.LENGTH_LONG).show();
+                                recreate();
+                            }
+                        });
+                    }
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
     }
 
     private void saveCloudCredentials() {
@@ -427,6 +511,10 @@ public class SettingsActivity extends BaseActivity {
         Reminders.setNextDate(this, nextToDate);
         if (remindCb.isChecked()) Reminders.schedule(this);
         else Reminders.cancel(this);
+
+        DailyBackup.setEnabled(this, dailyBackupCb.isChecked());
+        if (dailyBackupCb.isChecked()) DailyBackup.schedule(this);
+        else DailyBackup.cancel(this);
 
         getSharedPreferences("app", 0).edit()
                 .putBoolean("num_trips", numTripsCb.isChecked()).apply();

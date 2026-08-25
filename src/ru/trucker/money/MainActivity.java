@@ -26,7 +26,7 @@ public class MainActivity extends BaseActivity {
     private final Runnable syncRunner = new Runnable() {
         @Override public void run() {
             if (SyncManager.hasCredentials(MainActivity.this)) {
-                SyncManager.sync(MainActivity.this, null);
+                SyncManager.syncLatest(MainActivity.this, null);
             }
         }
     };
@@ -201,6 +201,8 @@ public class MainActivity extends BaseActivity {
             Reminders.schedule(this);
             Reminders.check(this);
         }
+        if (DailyBackup.isEnabled(this)) DailyBackup.schedule(this);
+        else DailyBackup.cancel(this);
     }
 
     @Override

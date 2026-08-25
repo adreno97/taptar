@@ -1,6 +1,5 @@
 package ru.trucker.money;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -27,10 +26,16 @@ public class SyncManager {
     private static final String SUPABASE_URL = "https://uywryoxjdvjcsmmjjhlk.supabase.co";
     private static final String ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5d3J5b3hqZHZqY3NtbWpqaGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MzU5MjksImV4cCI6MjEwMzIxMTkyOX0.gbz6ryzeZLQ6gPsmn3u4bTxziQztcBDVf1jd-lNInqY";
     private static final String BUCKET = "taptar-buckup";
-    private static final String OBJECT = "backup.json";
+    public static final String OBJECT = "backup.json";
+    private static final String SNAP_PREFIX = "snap-";
+    private static final int MAX_SNAPS = 60;
 
     public interface Callback {
         void done(boolean ok, String msg);
+    }
+
+    public interface ListCallback {
+        void done(boolean ok, String msg, String listJson);
     }
 
     private SyncManager() {}
@@ -58,9 +63,9 @@ public class SyncManager {
         return t > 0 ? android.text.format.DateFormat.format("dd.MM.yyyy HH:mm", t).toString() : "";
     }
 
-    /** Синхронизировать (загрузить снимок в облако). */
-    public static void sync(final Activity a, final Callback cb) {
-        final Context app = a.getApplicationContext();
+    /** Полный синк: уникальная копия (история) + текущая backup.json + обрезка старых. */
+    public static void sync(final Context a, final Callback cb) {
+        final Context app = a;
         thread(new Runnable() {
             @Override public void run() {
                 String msg; boolean ok = false;
@@ -68,27 +73,56 @@ public class SyncManager {
                     String jwt = login(app);
                     DbHelper db = new DbHelper(app);
                     String json = exportSnapshot(app, db);
-                    upload(app, json, jwt);
+                    uploadObject(app, json, jwt, snapName(), true);
+                    uploadObject(app, json, jwt, OBJECT, true);
+                    prune(app, jwt);
                     setLastSync(app);
                     ok = true;
                     msg = "Синхронизировано " + lastSyncText(app);
                 } catch (Exception e) {
                     msg = "Ошибка синхронизации: " + e.getMessage() + " (bucket: " + BUCKET + ")";
                 }
-                post(a, cb, ok, msg);
+                post(app, cb, ok, msg);
             }
         });
     }
 
-    /** Восстановить данные из облака (заменяет всё на устройстве). */
-    public static void restore(final Activity a, final Callback cb) {
-        final Context app = a.getApplicationContext();
+    /** Быстрый синк: только текущая копия backup.json, без файлов истории. */
+    public static void syncLatest(final Context a, final Callback cb) {
+        final Context app = a;
         thread(new Runnable() {
             @Override public void run() {
                 String msg; boolean ok = false;
                 try {
                     String jwt = login(app);
-                    String json = download(app, jwt);
+                    DbHelper db = new DbHelper(app);
+                    String json = exportSnapshot(app, db);
+                    uploadObject(app, json, jwt, OBJECT, true);
+                    setLastSync(app);
+                    ok = true;
+                    msg = "Синхронизировано " + lastSyncText(app);
+                } catch (Exception e) {
+                    msg = "Ошибка синхронизации: " + e.getMessage() + " (bucket: " + BUCKET + ")";
+                }
+                post(app, cb, ok, msg);
+            }
+        });
+    }
+
+    /** Восстановить последнюю копию (заменяет всё на устройстве). */
+    public static void restore(final Context a, final Callback cb) {
+        restoreObject(a, OBJECT, cb);
+    }
+
+    /** Восстановить конкретную копию по имени объекта. */
+    public static void restoreObject(final Context a, final String objectName, final Callback cb) {
+        final Context app = a;
+        thread(new Runnable() {
+            @Override public void run() {
+                String msg; boolean ok = false;
+                try {
+                    String jwt = login(app);
+                    String json = downloadObject(app, jwt, objectName);
                     if (json == null) {
                         msg = "В облаке нет резервной копии";
                     } else {
@@ -102,14 +136,14 @@ public class SyncManager {
                 } catch (Exception e) {
                     msg = "Ошибка восстановления: " + e.getMessage() + " (bucket: " + BUCKET + ")";
                 }
-                post(a, cb, ok, msg);
+                post(app, cb, ok, msg);
             }
         });
     }
 
     /** Проверка: есть ли резервная копия в облаке. */
-    public static void hasBackup(final Activity a, final Callback cb) {
-        final Context app = a.getApplicationContext();
+    public static void hasBackup(final Context a, final Callback cb) {
+        final Context app = a;
         thread(new Runnable() {
             @Override public void run() {
                 boolean ok = false; String msg = "";
@@ -123,7 +157,34 @@ public class SyncManager {
                 } catch (Exception e) {
                     msg = e.getMessage();
                 }
-                post(a, cb, ok, msg);
+                post(app, cb, ok, msg);
+            }
+        });
+    }
+
+    /** Список доступных копий (снапшотов) по убыванию даты. listJson — JSON-массив {name,label}. */
+    public static void listBackups(final Context a, final ListCallback cb) {
+        final Context app = a;
+        thread(new Runnable() {
+            @Override public void run() {
+                String msg = ""; String listJson = "[]";
+                boolean ok = false;
+                try {
+                    String jwt = login(app);
+                    JSONArray arr = listObjects(app, jwt, SNAP_PREFIX);
+                    JSONArray out = new JSONArray();
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject item = new JSONObject();
+                        item.put("name", arr.getJSONObject(i).optString("name"));
+                        item.put("label", snapLabel(item.optString("name")));
+                        out.put(item);
+                    }
+                    listJson = out.toString();
+                    ok = true;
+                } catch (Exception e) {
+                    msg = e.getMessage();
+                }
+                postList(app, cb, ok, msg, listJson);
             }
         });
     }
@@ -150,10 +211,10 @@ public class SyncManager {
         return j.getString("access_token");
     }
 
-    private static void upload(Context c, String json, String jwt) throws Exception {
-        HttpURLConnection conn = conn(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + OBJECT, "PUT", jwt, null);
+    private static void uploadObject(Context c, String json, String jwt, String objectName, boolean upsert) throws Exception {
+        HttpURLConnection conn = conn(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + objectName, "PUT", jwt, null);
         conn.setRequestProperty("Content-Type", "application/octet-stream");
-        conn.setRequestProperty("x-upsert", "true");
+        if (upsert) conn.setRequestProperty("x-upsert", "true");
         conn.setDoOutput(true);
         OutputStream os = conn.getOutputStream();
         os.write(json.getBytes(StandardCharsets.UTF_8));
@@ -161,15 +222,64 @@ public class SyncManager {
         read(conn);
     }
 
-    private static String download(Context c, String jwt) throws Exception {
-        HttpURLConnection conn = conn(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + OBJECT, "GET", jwt, null);
+    private static String downloadObject(Context c, String jwt, String objectName) throws Exception {
+        HttpURLConnection conn = conn(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + objectName, "GET", jwt, null);
         int code = conn.getResponseCode();
         if (code == 404) {
             conn.disconnect();
             return null;
         }
-        String s = read(conn);
-        return s;
+        return read(conn);
+    }
+
+    private static JSONArray listObjects(Context c, String jwt, String prefix) throws Exception {
+        String url = SUPABASE_URL + "/storage/v1/object/list/" + BUCKET;
+        HttpURLConnection conn = conn(url, "POST", jwt, "application/json");
+        conn.setDoOutput(true);
+        JSONObject body = new JSONObject();
+        body.put("prefix", prefix);
+        body.put("limit", 500);
+        body.put("offset", 0);
+        JSONObject sort = new JSONObject();
+        sort.put("column", "name");
+        sort.put("order", "desc");
+        body.put("sortBy", sort);
+        OutputStream os = conn.getOutputStream();
+        os.write(body.toString().getBytes(StandardCharsets.UTF_8));
+        os.close();
+        String resp = read(conn);
+        return new JSONArray(resp);
+    }
+
+    /** Хранить не больше MAX_SNAPS копий — старые удаляются. */
+    private static void prune(Context c, String jwt) throws Exception {
+        JSONArray arr = listObjects(c, jwt, SNAP_PREFIX);
+        if (arr.length() <= MAX_SNAPS) return;
+        for (int i = MAX_SNAPS; i < arr.length(); i++) {
+            String name = arr.getJSONObject(i).optString("name");
+            try {
+                HttpURLConnection conn = conn(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + name, "DELETE", jwt, null);
+                conn.getResponseCode();
+                conn.disconnect();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private static String snapName() {
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US);
+        return SNAP_PREFIX + sdf.format(new java.util.Date()) + ".json";
+    }
+
+    private static String snapLabel(String name) {
+        try {
+            String base = name.replace(SNAP_PREFIX, "").replace(".json", "");
+            java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US);
+            java.text.SimpleDateFormat out = new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm", java.util.Locale.US);
+            return out.format(in.parse(base));
+        } catch (Exception e) {
+            return name;
+        }
     }
 
     private static HttpURLConnection conn(String urlStr, String method, String jwt, String contentType) throws Exception {
@@ -340,11 +450,20 @@ public class SyncManager {
         new Thread(r).start();
     }
 
-    private static void post(Activity a, final Callback cb, final boolean ok, final String msg) {
+    private static void post(Context a, final Callback cb, final boolean ok, final String msg) {
         if (cb == null) return;
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override public void run() {
                 cb.done(ok, msg);
+            }
+        });
+    }
+
+    private static void postList(Context a, final ListCallback cb, final boolean ok, final String msg, final String listJson) {
+        if (cb == null) return;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override public void run() {
+                cb.done(ok, msg, listJson);
             }
         });
     }
