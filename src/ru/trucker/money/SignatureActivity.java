@@ -18,6 +18,7 @@ import android.widget.Toast;
 public class SignatureActivity extends BaseActivity {
 
     private static final int REQ_PICK = 1;
+    private static final int REQ_IMPORT = 2;
 
     private ImageView preview;
     private TextView threshTv;
@@ -94,6 +95,36 @@ public class SignatureActivity extends BaseActivity {
             @Override public void onClick(View v) { saveSignature(); }
         });
 
+        LinearLayout ioRow = new LinearLayout(this);
+        ioRow.setOrientation(LinearLayout.HORIZONTAL);
+        ioRow.setPadding(0, Util.dp(this, 10), 0, 0);
+        Button expBtn = new Button(this);
+        expBtn.setText("📤 Экспорт");
+        expBtn.setAllCaps(false);
+        expBtn.setTextSize(14);
+        expBtn.setTextColor(Ui.buttonText(this));
+        expBtn.setBackground(Ui.round(this, Ui.navBtn(this), 8));
+        Button impBtn = new Button(this);
+        impBtn.setText("📥 Импорт");
+        impBtn.setAllCaps(false);
+        impBtn.setTextSize(14);
+        impBtn.setTextColor(Ui.buttonText(this));
+        impBtn.setBackground(Ui.round(this, Ui.navBtn(this), 8));
+        ioRow.addView(expBtn, new LinearLayout.LayoutParams(0, Util.dp(this, 46), 1f));
+        ioRow.addView(impBtn, new LinearLayout.LayoutParams(0, Util.dp(this, 46), 1f));
+        root.addView(ioRow);
+
+        expBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { exportSignature(); }
+        });
+        impBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                i.setType("image/*");
+                startActivityForResult(i, REQ_IMPORT);
+            }
+        });
+
         TextView status = new TextView(this);
         status.setTextSize(13);
         status.setTextColor(Ui.label(this));
@@ -127,6 +158,45 @@ public class SignatureActivity extends BaseActivity {
             } catch (Exception e) {
                 Toast.makeText(this, "Не удалось открыть изображение", Toast.LENGTH_LONG).show();
             }
+        } else if (req == REQ_IMPORT && res == RESULT_OK && data != null && data.getData() != null) {
+            try {
+                Uri uri = data.getData();
+                Bitmap bmp = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));
+                if (bmp == null) throw new Exception();
+                SignatureStore.save(this, bmp);
+                if (bmp != null) bmp.recycle();
+                Toast.makeText(this, "Подпись импортирована", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(this, "Не удалось импортировать подпись", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void exportSignature() {
+        if (!SignatureStore.exists(this)) {
+            Toast.makeText(this, "Подпись не загружена", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            java.io.File dir = new java.io.File(getFilesDir(), "pdf");
+            if (!dir.exists()) dir.mkdirs();
+            java.io.File copy = new java.io.File(dir, "signature.png");
+            java.io.FileInputStream in = new java.io.FileInputStream(SignatureStore.file(this));
+            java.io.FileOutputStream out = new java.io.FileOutputStream(copy);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            in.close();
+            out.close();
+
+            Uri uri = Uri.parse("content://ru.trucker.money.pdf/signature.png");
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("image/png");
+            share.putExtra(Intent.EXTRA_STREAM, uri);
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(share, "Экспорт подписи"));
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка экспорта: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

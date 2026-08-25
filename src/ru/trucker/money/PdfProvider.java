@@ -19,6 +19,9 @@ public class PdfProvider extends ContentProvider {
         if (name != null && name.endsWith(".xlsx")) {
             return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         }
+        if (name != null && name.endsWith(".png")) {
+            return "image/png";
+        }
         return "application/pdf";
     }
 
