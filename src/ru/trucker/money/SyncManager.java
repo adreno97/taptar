@@ -26,7 +26,7 @@ public class SyncManager {
 
     private static final String SUPABASE_URL = "https://uywryoxjdvjcsmmjjhlk.supabase.co";
     private static final String ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5d3J5b3hqZHZqY3NtbWpqaGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2MzU5MjksImV4cCI6MjEwMzIxMTkyOX0.gbz6ryzeZLQ6gPsmn3u4bTxziQztcBDVf1jd-lNInqY";
-    private static final String BUCKET = "taptar-backup";
+    private static final String BUCKET = "taptar-buckup";
     private static final String OBJECT = "backup.json";
 
     public interface Callback {
