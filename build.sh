@@ -16,12 +16,12 @@ echo "== aapt R.java =="
 "$BT/aapt" package -f -m -J build/gen -M AndroidManifest.xml -S res -I "$PLAT"
 
 echo "== javac =="
-"$JAVAC" --release 8 -classpath "$PLAT:build/gen" -d build/obj $(find src -name '*.java')
+"$JAVAC" --release 8 -classpath "$PLAT:build/gen:libs/pdfbox-android.jar" -d build/obj $(find src -name '*.java')
 echo "ok"
 
 echo "== d8 =="
 /usr/lib/jvm/java-23-openjdk-amd64/bin/java -cp /home/adreno/android-sdk/cmdline-tools/latest/lib/r8.jar com.android.tools.r8.D8 \
-    --release --min-api 21 --lib "$PLAT" --output build/dex $(find build/obj -name '*.class') 2>/dev/null
+    --release --min-api 21 --lib "$PLAT" --output build/dex $(find build/obj -name '*.class') libs/pdfbox-android.jar 2>/dev/null
 cp build/dex/classes.dex build/stage/classes.dex
 echo "ok"
 

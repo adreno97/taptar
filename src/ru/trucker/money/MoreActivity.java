@@ -57,6 +57,11 @@ public class MoreActivity extends BaseActivity {
                 startActivity(new Intent(MoreActivity.this, CloudActivity.class));
             }
         });
+        row(root, "✍ Подпись в PDF", "Поставить свою подпись на акт или реестр и сохранить", new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                startActivity(new Intent(MoreActivity.this, SignActivity.class));
+            }
+        });
         row(root, "⚙ Настройки", "Зоны, точки выгрузки, напоминания о ТО", new View.OnClickListener() {
             @Override public void onClick(View v) {
                 startActivity(new Intent(MoreActivity.this, SettingsActivity.class));
