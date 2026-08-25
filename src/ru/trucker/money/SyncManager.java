@@ -171,12 +171,14 @@ public class SyncManager {
                 boolean ok = false;
                 try {
                     String jwt = login(app);
-                    JSONArray arr = listObjects(app, jwt, SNAP_PREFIX);
+                    JSONArray arr = listObjects(app, jwt);
                     JSONArray out = new JSONArray();
                     for (int i = 0; i < arr.length(); i++) {
+                        String name = arr.getJSONObject(i).optString("name");
+                        if (!name.startsWith(SNAP_PREFIX)) continue;
                         JSONObject item = new JSONObject();
-                        item.put("name", arr.getJSONObject(i).optString("name"));
-                        item.put("label", snapLabel(item.optString("name")));
+                        item.put("name", name);
+                        item.put("label", snapLabel(name));
                         out.put(item);
                     }
                     listJson = out.toString();
@@ -232,12 +234,12 @@ public class SyncManager {
         return read(conn);
     }
 
-    private static JSONArray listObjects(Context c, String jwt, String prefix) throws Exception {
+    private static JSONArray listObjects(Context c, String jwt) throws Exception {
         String url = SUPABASE_URL + "/storage/v1/object/list/" + BUCKET;
         HttpURLConnection conn = conn(url, "POST", jwt, "application/json");
         conn.setDoOutput(true);
         JSONObject body = new JSONObject();
-        body.put("prefix", prefix);
+        body.put("prefix", "");
         body.put("limit", 500);
         body.put("offset", 0);
         JSONObject sort = new JSONObject();
@@ -253,10 +255,15 @@ public class SyncManager {
 
     /** Хранить не больше MAX_SNAPS копий — старые удаляются. */
     private static void prune(Context c, String jwt) throws Exception {
-        JSONArray arr = listObjects(c, jwt, SNAP_PREFIX);
-        if (arr.length() <= MAX_SNAPS) return;
-        for (int i = MAX_SNAPS; i < arr.length(); i++) {
+        JSONArray arr = listObjects(c, jwt);
+        java.util.ArrayList<String> snaps = new java.util.ArrayList<>();
+        for (int i = 0; i < arr.length(); i++) {
             String name = arr.getJSONObject(i).optString("name");
+            if (name.startsWith(SNAP_PREFIX)) snaps.add(name);
+        }
+        if (snaps.size() <= MAX_SNAPS) return;
+        for (int i = MAX_SNAPS; i < snaps.size(); i++) {
+            String name = snaps.get(i);
             try {
                 HttpURLConnection conn = conn(SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + name, "DELETE", jwt, null);
                 conn.getResponseCode();
