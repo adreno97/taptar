@@ -274,6 +274,21 @@ public class DbHelper extends SQLiteOpenHelper {
         return queryRecords(sql, args.toArray(new String[0]));
     }
 
+    public List<Record> dumpTrips() {
+        return queryRecords("SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0, 0 FROM trips ORDER BY _id ASC", null);
+    }
+
+    public List<Record> dumpExpenses() {
+        return queryRecords("SELECT _id, 0 AS inc, date, category, 0, 0, 0, 0, amount AS amt, category AS cat, note, liters, price_per_liter, mileage, discount FROM expenses ORDER BY _id ASC", null);
+    }
+
+    public void clearAll() {
+        SQLiteDatabase d = getWritableDatabase();
+        d.delete("trips", null, null);
+        d.delete("expenses", null, null);
+        d.delete("maintenance", null, null);
+    }
+
     public List<Record> getRecent(int limit) {
         return queryRecords("SELECT _id, 1 AS inc, date, number, zone, is_return, base_price, num_points, revenue AS amt, '' AS cat, note, 0, 0, 0, 0 FROM trips " +
                 "UNION ALL " +

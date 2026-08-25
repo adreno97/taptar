@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,14 @@ public class MainActivity extends BaseActivity {
     private ListView listView;
     private RecordsAdapter adapter;
     private List<DbHelper.Record> data = new ArrayList<>();
+    private final android.os.Handler syncHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable syncRunner = new Runnable() {
+        @Override public void run() {
+            if (SyncManager.hasCredentials(MainActivity.this)) {
+                SyncManager.sync(MainActivity.this, null);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,6 +136,40 @@ public class MainActivity extends BaseActivity {
                 openEdit((DbHelper.Record) item);
             }
         });
+
+        maybeOfferCloudRestore();
+    }
+
+    private void maybeOfferCloudRestore() {
+        if (!SyncManager.hasCredentials(this)) return;
+        if (getSharedPreferences("app", 0).getBoolean("cloud_prompted", false)) return;
+        if (!dbEmpty()) return;
+        getSharedPreferences("app", 0).edit().putBoolean("cloud_prompted", true).apply();
+        SyncManager.hasBackup(this, new SyncManager.Callback() {
+            @Override public void done(boolean ok, String msg) {
+                if (!ok) return;
+                new android.app.AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Резервная копия")
+                        .setMessage("В облаке найдена резервная копия. Восстановить данные?")
+                        .setPositiveButton("Восстановить", new android.content.DialogInterface.OnClickListener() {
+                            @Override public void onClick(android.content.DialogInterface d, int w) {
+                                SyncManager.restore(MainActivity.this, new SyncManager.Callback() {
+                                    @Override public void done(boolean ok2, String msg2) {
+                                        Toast.makeText(MainActivity.this, msg2, Toast.LENGTH_LONG).show();
+                                        recreate();
+                                    }
+                                });
+                            }
+                        })
+                        .setNegativeButton("Позже", null)
+                        .show();
+            }
+        });
+    }
+
+    private boolean dbEmpty() {
+        List<DbHelper.Record> r = db.getRecords(true, 0);
+        return r.isEmpty() && db.getMaintAll().isEmpty();
     }
 
     private void openEdit(DbHelper.Record r) {
@@ -147,6 +190,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        syncHandler.removeCallbacks(syncRunner);
         refresh();
         if (Reminders.isEnabled(this)) {
             if (android.os.Build.VERSION.SDK_INT >= 33
@@ -157,6 +201,12 @@ public class MainActivity extends BaseActivity {
             Reminders.schedule(this);
             Reminders.check(this);
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        syncHandler.postDelayed(syncRunner, 1500);
     }
 
     private void refresh() {

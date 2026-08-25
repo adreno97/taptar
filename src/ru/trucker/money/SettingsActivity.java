@@ -31,6 +31,9 @@ public class SettingsActivity extends BaseActivity {
     private EditText mileageEt, intervalEt;
     private Button nextToBtn;
     private long nextToDate = 0;
+    private EditText cloudEmailEt, cloudPassEt;
+    private TextView cloudStatusTv;
+    private Button syncBtn, restoreBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,6 +138,49 @@ public class SettingsActivity extends BaseActivity {
         darkCb.setTextSize(15);
         root.addView(darkCb);
 
+        TextView h6 = new TextView(this);
+        h6.setText("Облачная синхронизация");
+        h6.setTextSize(15);
+        h6.setTextColor(Ui.title(this));
+        h6.setPadding(0, Util.dp(this, 18), 0, 0);
+        root.addView(h6);
+
+        TextView hint6 = new TextView(this);
+        hint6.setText("Резервная копия в Supabase. Синхронизация происходит при запуске, закрытии приложения и вручную.");
+        hint6.setTextSize(12);
+        hint6.setTextColor(Ui.sub(this));
+        root.addView(hint6);
+
+        cloudEmailEt = makeRow(root, "Email аккаунта (Supabase)");
+        cloudEmailEt.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        cloudPassEt = makeRow(root, "Пароль");
+        cloudPassEt.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+        cloudStatusTv = new TextView(this);
+        cloudStatusTv.setTextSize(13);
+        cloudStatusTv.setTextColor(Ui.label(this));
+        cloudStatusTv.setPadding(0, Util.dp(this, 8), 0, 0);
+        root.addView(cloudStatusTv);
+
+        LinearLayout cloudRow = new LinearLayout(this);
+        cloudRow.setOrientation(LinearLayout.HORIZONTAL);
+        cloudRow.setPadding(0, Util.dp(this, 8), 0, 0);
+        syncBtn = new Button(this);
+        syncBtn.setText("Синхронизировать");
+        syncBtn.setAllCaps(false);
+        syncBtn.setTextSize(14);
+        syncBtn.setTextColor(Ui.buttonText(this));
+        syncBtn.setBackground(Ui.round(this, Ui.accent(this), 8));
+        restoreBtn = new Button(this);
+        restoreBtn.setText("Восстановить");
+        restoreBtn.setAllCaps(false);
+        restoreBtn.setTextSize(14);
+        restoreBtn.setTextColor(Ui.buttonText(this));
+        restoreBtn.setBackground(Ui.round(this, Ui.navBtn(this), 8));
+        cloudRow.addView(syncBtn, new LinearLayout.LayoutParams(0, Util.dp(this, 48), 1f));
+        cloudRow.addView(restoreBtn, new LinearLayout.LayoutParams(0, Util.dp(this, 48), 1f));
+        root.addView(cloudRow);
+
         Button save = new Button(this);
         save.setText("Сохранить");
         save.setTextSize(16);
@@ -171,6 +217,10 @@ public class SettingsActivity extends BaseActivity {
         nextToDate = Reminders.nextDate(this);
         nextToBtn.setText(nextToDate > 0 ? "Дата следующего ТО: " + Util.date(nextToDate) : "Дата следующего ТО: не задана");
 
+        cloudEmailEt.setText(SyncManager.email(this));
+        cloudPassEt.setText(SyncManager.password(this));
+        updateCloudStatus();
+
         countSpinner.setSelection(Zones.getCount(this) - Zones.MIN);
         countSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
@@ -186,6 +236,62 @@ public class SettingsActivity extends BaseActivity {
                 recreate();
             }
         });
+
+        syncBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                saveCloudCredentials();
+                if (!SyncManager.hasCredentials(SettingsActivity.this)) {
+                    Toast.makeText(SettingsActivity.this, "Укажите email и пароль аккаунта", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                SyncManager.sync(SettingsActivity.this, new SyncManager.Callback() {
+                    @Override public void done(boolean ok, String msg) {
+                        updateCloudStatus();
+                        Toast.makeText(SettingsActivity.this, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        });
+
+        restoreBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                saveCloudCredentials();
+                if (!SyncManager.hasCredentials(SettingsActivity.this)) {
+                    Toast.makeText(SettingsActivity.this, "Укажите email и пароль аккаунта", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                new android.app.AlertDialog.Builder(SettingsActivity.this)
+                        .setTitle("Восстановить из облака")
+                        .setMessage("Все данные на устройстве будут заменены данными из облака. Продолжить?")
+                        .setPositiveButton("Восстановить", new android.content.DialogInterface.OnClickListener() {
+                            @Override public void onClick(android.content.DialogInterface d, int w) {
+                                SyncManager.restore(SettingsActivity.this, new SyncManager.Callback() {
+                                    @Override public void done(boolean ok, String msg) {
+                                        updateCloudStatus();
+                                        Toast.makeText(SettingsActivity.this, msg, Toast.LENGTH_LONG).show();
+                                        recreate();
+                                    }
+                                });
+                            }
+                        })
+                        .setNegativeButton("Отмена", null)
+                        .show();
+            }
+        });
+    }
+
+    private void saveCloudCredentials() {
+        String e = cloudEmailEt.getText().toString().trim();
+        String p = cloudPassEt.getText().toString();
+        if (!e.isEmpty() && !p.isEmpty()) {
+            SyncManager.setCredentials(this, e, p);
+        }
+    }
+
+    private void updateCloudStatus() {
+        String last = SyncManager.lastSyncText(this);
+        cloudStatusTv.setText(last.isEmpty() ? "Ещё не синхронизировано"
+                : "Последняя синхронизация: " + last);
     }
 
     private void buildZones(int count) {
@@ -324,6 +430,8 @@ public class SettingsActivity extends BaseActivity {
 
         getSharedPreferences("app", 0).edit()
                 .putBoolean("num_trips", numTripsCb.isChecked()).apply();
+
+        saveCloudCredentials();
 
         Toast.makeText(this, "Настройки сохранены", Toast.LENGTH_SHORT).show();
         finish();
