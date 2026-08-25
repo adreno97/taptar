@@ -52,6 +52,11 @@ public class MoreActivity extends BaseActivity {
                 }
             }
         });
+        row(root, "☁ Облако и бэкапы", "Резервная копия в Supabase, ежедневный бэкап, восстановление по дате", new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                startActivity(new Intent(MoreActivity.this, CloudActivity.class));
+            }
+        });
         row(root, "⚙ Настройки", "Зоны, точки выгрузки, напоминания о ТО", new View.OnClickListener() {
             @Override public void onClick(View v) {
                 startActivity(new Intent(MoreActivity.this, SettingsActivity.class));

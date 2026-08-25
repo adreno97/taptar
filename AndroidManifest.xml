@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="ru.trucker.money"
-    android:versionCode="4"
-    android:versionName="1.3">
+    android:versionCode="5"
+    android:versionName="1.4">
 
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
 
@@ -33,6 +33,7 @@
         <activity android:name=".AddMaintenanceActivity" android:label="Обслуживание ТС" android:exported="false" />
         <activity android:name=".ImportActivity" android:label="Импорт из Excel" android:exported="false" />
         <activity android:name=".MoreActivity" android:label="Ещё" android:exported="false" />
+        <activity android:name=".CloudActivity" android:label="Облако и бэкапы" android:exported="false" />
 
         <provider
             android:name=".PdfProvider"
