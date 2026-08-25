@@ -106,7 +106,7 @@ public class SignActivity extends BaseActivity {
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setPadding(Util.dp(this, 8), 0, Util.dp(this, 8), Util.dp(this, 8));
-        delBtn = actionBtn("🗑 Подпись");
+        delBtn = actionBtn("🗑 Удалить");
         clearBtn = actionBtn("Очистить стр.");
         Button clearAllBtn = actionBtn("Очистить всё");
         actions.addView(delBtn, new LinearLayout.LayoutParams(0, Util.dp(this, 44), 1f));
@@ -260,6 +260,23 @@ public class SignActivity extends BaseActivity {
 
     // ---------- сохранение ----------
 
+    private void confirmDeleteSignature(final int idx) {
+        if (idx < 0 || idx >= pageView.places.size()) return;
+        final PdfSign.Place p = pageView.places.get(idx);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Удалить подпись")
+                .setMessage("Удалить выбранную подпись?")
+                .setPositiveButton("Удалить", new android.content.DialogInterface.OnClickListener() {
+                    @Override public void onClick(android.content.DialogInterface d, int w) {
+                        pageView.places.remove(p);
+                        pageView.sel = -1;
+                        pageView.invalidate();
+                    }
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
+    }
+
     private void createPdf() {
         if (renderer == null) {
             Toast.makeText(this, "Сначала откройте PDF", Toast.LENGTH_SHORT).show();
@@ -373,6 +390,9 @@ public class SignActivity extends BaseActivity {
         private float origNX, origNY;
         private boolean moved;
         private float initDist, initNW;
+        private long downTime;
+
+        private static final float OVERFLOW = 0.02f;
 
         SignPageView(Context ctx) {
             super(ctx);
@@ -428,6 +448,7 @@ public class SignActivity extends BaseActivity {
                     moved = false;
                     initDist = 0;
                     initNW = 0;
+                    downTime = System.currentTimeMillis();
                     invalidate();
                     break;
                 }
@@ -452,25 +473,30 @@ public class SignActivity extends BaseActivity {
                                 || Math.abs(dy) > Util.dp(SignActivity.this, 3)) moved = true;
                         if (moved) {
                             PdfSign.Place p = places.get(sel);
-                            p.nx = clamp(origNX + dx / r.width(), 0f, 1f - p.nw);
-                            p.ny = clamp(origNY + dy / r.height(), 0f,
-                                    1f - p.nw * ((float) sig.getHeight() / (float) sig.getWidth()));
+                            p.nx = clamp(origNX + dx / r.width(), -OVERFLOW, 1f - p.nw + OVERFLOW);
+                            p.ny = clamp(origNY + dy / r.height(), -OVERFLOW,
+                                    1f - p.nw * ((float) sig.getHeight() / (float) sig.getWidth()) + OVERFLOW);
                             invalidate();
                         }
                     }
                     break;
                 }
                 case MotionEvent.ACTION_UP: {
-                    if (pc == 1 && sel < 0 && !moved && initDist == 0) {
-                        float nx = normX(ev.getX(0), r);
-                        float ny = normY(ev.getY(0), r);
-                        PdfSign.Place p = new PdfSign.Place(
-                                clamp(nx - 0.1f, 0f, 0.9f),
-                                clamp(ny - 0.06f, 0f, 0.94f),
-                                0.2f);
-                        places.add(p);
-                        sel = places.size() - 1;
-                        invalidate();
+                    if (pc == 1 && !moved && initDist == 0) {
+                        boolean longPress = System.currentTimeMillis() - downTime >= 500L;
+                        if (sel >= 0) {
+                            if (longPress) confirmDeleteSignature(sel);
+                        } else if (!longPress) {
+                            float nx = normX(ev.getX(0), r);
+                            float ny = normY(ev.getY(0), r);
+                            PdfSign.Place p = new PdfSign.Place(
+                                    clamp(nx - 0.1f, -OVERFLOW, 1f - 0.2f + OVERFLOW),
+                                    clamp(ny - 0.06f, -OVERFLOW, 1f - 0.2f + OVERFLOW),
+                                    0.2f);
+                            places.add(p);
+                            sel = places.size() - 1;
+                            invalidate();
+                        }
                     }
                     initDist = 0;
                     initNW = 0;
